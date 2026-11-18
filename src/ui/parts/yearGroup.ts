@@ -36,10 +36,45 @@ export function renderYearGroup(
   );
   groupEl.appendChild(headingEl);
 
-  for (const cardView of group.cards) {
-    const expanded = isExpanded(cardView.event.id);
-    const cardEl = renderCard(cardView, expanded);
-    groupEl.appendChild(cardEl);
+  const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
+    for (const cardView of cards) {
+      const expanded = isExpanded(cardView.event.id);
+      host.appendChild(renderCard(cardView, expanded));
+    }
+  };
+
+  const months = Array.isArray(group.months) && group.months.length > 0 ? group.months : null;
+
+  if (!months) {
+    // 兼容：调用方只给了扁平 cards（无月份信息）
+    renderCardsInto(groupEl, group.cards);
+    return groupEl;
+  }
+
+  // 二级时间轴：年份 → 月份 → 卡片
+  for (const monthGroup of months) {
+    const monthLabel = monthGroup.month ? `${Number(monthGroup.month)} 月` : '未知月份';
+    const monthEl = el('section', {
+      class: 'htl-month-group',
+      'data-month': monthGroup.month,
+      'data-year': group.year,
+    });
+    monthEl.appendChild(
+      el(
+        'h3',
+        {
+          class: 'htl-month-heading',
+          id: `month-${group.year}-${monthGroup.month}`,
+          'data-year': group.year,
+          'data-month': monthGroup.month,
+          'data-focus-key': `month.${group.year}.${monthGroup.month}`,
+          tabindex: '-1',
+        },
+        [monthLabel]
+      )
+    );
+    renderCardsInto(monthEl, monthGroup.cards);
+    groupEl.appendChild(monthEl);
   }
 
   return groupEl;

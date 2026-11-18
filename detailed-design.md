@@ -9,6 +9,7 @@
 | V0.0.1 | 2026-11-18 | 初版：17 个模块、25 条 REQ 全覆盖、6 组单测锚点（60+ 条 GWT）、22 条 store 事务用例 | 四项技术决策：Vite+TS / Core-UI 双层 / 单 key 存储 / Vitest 范围 |
 | V0.0.1-R1 | 2026-11-18 | Seven Gates 自检修正 9 处：新增 `FIELD_TOO_LONG` 区分表单与导入的超长处理、`validateTopShape` 补 `ok` 字段、`mutate` 签名补 draft 返回、删除 `InitResult.ok:false` 死分支、补 MOD-016/MOD-017、补 `openRestoreBackupConfirm` 入口、`data-focus-key` 补动态行格式、重排模块顺序为 001→017 连续、删除只读验收项 | 自检 |
 | V0.0.1-R2 | 2026-11-18 | 任务 prompt 审查回写 4 处：新增 §7.2.1 `IssueCode → 用户可见文案` 映射表（原表只有场景、不列 code 名，29 个 code 中 27 个无处取文案）；§3 MOD-014 补完整 CSS 类名与主题变量清单（原只有"类名约定"一句话，T12 与 T14/T15/T16 无共同契约）；§6.3 补覆盖模式 `categories` 取并集；§8 补 `id.spec.ts` 的 I1~I4 用例表（原文只有 tasks/T04 里有，§8 缺组） | prompt 审查 |
+| V0.0.1-R3 | 2026-11-18 | 二级时间轴：REQ-012 升级为「年 → 月」两级分组（用户要求月份也作为一层时间轴）。MOD-006 `YearGroup` 增加 `months: MonthGroup[]`、`MonthGroup { month, cards }`；MOD-010 渲染月份小节且不吸顶；MOD-014 类名表补 `.htl-month-group` `.htl-month-heading`；§4.6 `data-focus-key` 补 `month.<YYYY>.<MM>`。空月份不占位 | 用户变更请求 |
 本文件是下游任务拆分与代码生成的**权威冻结快照**。凡本文件与需求文档冲突，以实现本文件与需求文档中更严格的一条为准，并回填修订记录。
 
 ---
@@ -236,9 +237,9 @@ personal-history-timeline/
 ### MOD-006 `src/core/select.ts`
 - **Traces to**: REQ-012 [P0]、REQ-013 [P0]、REQ-014 [P0]、REQ-015 [P0]、REQ-016 [P1]、REQ-019 [P0]
 - **Responsible File(s)**: `src/core/select.ts`
-- **Role & Boundaries**: 排序、筛选、关键词搜索、年份分组、反向关联索引、卡片展示所需的派生数据（最新记录、关联列表、跨度）。
+- **Role & Boundaries**: 排序、筛选、关键词搜索、年份分组（年内再按月分组）、反向关联索引、卡片展示所需的派生数据（最新记录、关联列表、跨度）。
 - **Non-Goals**: 不产生 DOM、不做高亮、不做分页。
-- **SSOT**: 拥有「最新记录」判定、事件排序比较器、筛选谓词、关联合并去重规则。
+- **SSOT**: 拥有「最新记录」判定、事件排序比较器、筛选谓词、关联合并去重规则、年月两级分组规则。
 - **Public Interface**:
   ```ts
   export interface RelationView { eventId: string; date: string; title: string; dir: 'before'|'after'|'same'; spanText: string; }
@@ -251,7 +252,8 @@ personal-history-timeline/
     recordCount: number;
     expandable: boolean;
   }
-  export interface YearGroup { year: string; cards: CardView[]; }
+  export interface MonthGroup { month: string; cards: CardView[]; }   // month 为 '01'..'12'
+  export interface YearGroup { year: string; months: MonthGroup[]; cards: CardView[]; } // months 为年内月份小节；cards 为该年扁平视图
 
   export function buildRelationIndex(events: TimelineEvent[]): Map<string, string[]>;
   export function latestRecord(e: TimelineEvent): PersonalRecord | null;
@@ -304,8 +306,8 @@ personal-history-timeline/
 ### MOD-010 `src/ui/render.ts` + `src/ui/parts/card.ts` + `yearGroup.ts`
 - **Traces to**: REQ-012 [P0]、REQ-013 [P0]、REQ-014 [P0]、REQ-018 [P1]
 - **Responsible File(s)**: `src/ui/render.ts`、`src/ui/parts/card.ts`、`src/ui/parts/yearGroup.ts`
-- **Role & Boundaries**: 读 `AppState` 重建 `#timeline-root`；渲染折叠/展开两态、空态、年份分组与吸顶标题。
-- **Non-Goals**: 不计算最新记录/跨度/筛选（全部来自 `CardView`）；不绑定事件（由 `bind.ts` 一次性委托）。
+- **Role & Boundaries**: 读 `AppState` 重建 `#timeline-root`；渲染折叠/展开两态、空态、年份分组与吸顶标题，以及年内月份小节（年 → 月 → 卡片两级时间轴）。
+- **Non-Goals**: 不计算最新记录/跨度/筛选（全部来自 `CardView`）；不绑定事件（由 `bind.ts` 一次性委托）；月份小节不做吸顶。
 - **Public Interface**:
   ```ts
   export function render(state: Readonly<AppState>): void; // 内部完成焦点与滚动恢复
@@ -375,6 +377,7 @@ personal-history-timeline/
   |------|------|
   | 容器 | `.htl-app` `.htl-timeline`（竖线） |
   | 年份 | `.htl-year-group` `.htl-year-heading`（sticky） |
+  | 月份 | `.htl-month-group` `.htl-month-heading`（小节标题，不 sticky） |
   | 卡片 | `.htl-card` `.htl-card--expanded` `.htl-card__date` `.htl-card__title` `.htl-card__summary` `.htl-card__meta` `.htl-star` |
   | 筛选与导航 | `.htl-filter-bar` `.htl-chip` `.htl-chip--active` `.htl-year-nav` |
   | 浮层 | `.htl-modal` `.htl-toast` `.htl-lightbox` |
@@ -520,7 +523,7 @@ export const SCHEMA_VERSION = 1;
 | `#timeline-root` | 时间轴重绘容器（唯一被整体重建的子树） |
 | `#overlay-root` | 弹窗/灯箱/Toast 容器（永不随重绘重建） |
 | `#filter-bar` / `#year-nav` | 筛选条与年份锚点（render 时局部重建，不属 `#timeline-root`） |
-| `[data-focus-key]` | 可聚焦控件唯一键。固定键：`filter.keyword`、`card.<eventId>.toggle`、`year.<YYYY>`。表单内键必须带序号或 id 以免动态行冲突：`form.event.title`、`form.event.links.<i>.name`、`form.record.<recordId>.summary`、`form.record.new.summary` |
+| `[data-focus-key]` | 可聚焦控件唯一键。固定键：`filter.keyword`、`card.<eventId>.toggle`、`year.<YYYY>`、`month.<YYYY>.<MM>`。表单内键必须带序号或 id 以免动态行冲突：`form.event.title`、`form.event.links.<i>.name`、`form.record.<recordId>.summary`、`form.record.new.summary` |
 | `[data-action]` | 事件委托的动作名：`toggle-card`、`open-event-form`、`delete-event`、`open-record-form`、`delete-record`、`open-lightbox`、`jump-relation`、`toggle-filter-category`…… |
 | `[data-id]` | 动作目标 id（eventId / recordId / year / category 名） |
 

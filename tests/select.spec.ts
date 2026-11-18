@@ -425,4 +425,52 @@ describe('MOD-006 select: S1~S20 规范测试', () => {
       expect(matchFilters(eNoRec, f)).toBe(false);
     });
   });
+  describe('buildCards 二级时间轴：年 → 月分组（v0.0.2）', () => {
+    const mk = (date: string, id: string) => makeEvent({ date, id });
+
+    it('M2-1: 同一年的三个月各成一个小节，月内卡片顺序随全局排序', () => {
+      const events = [
+        mk('2026-03-10', 'evt_a'),
+        mk('2026-01-05', 'evt_b'),
+        mk('2026-03-20', 'evt_c'),
+      ];
+      const groups = buildCards(events, defaultFilter, 'desc');
+      expect(groups).toHaveLength(1);
+      expect(groups[0]!.months.map((m) => m.month)).toEqual(['03', '01']);
+      expect(groups[0]!.months[0]!.cards.map((c) => c.event.id)).toEqual(['evt_c', 'evt_a']);
+      expect(groups[0]!.months[1]!.cards.map((c) => c.event.id)).toEqual(['evt_b']);
+    });
+
+    it('M2-2: 跨年时每年各自持有自己的月份小节', () => {
+      const events = [
+        mk('2026-02-01', 'evt_1'),
+        mk('2025-12-31', 'evt_2'),
+        mk('2025-06-01', 'evt_3'),
+      ];
+      const groups = buildCards(events, defaultFilter, 'desc');
+      expect(groups.map((g) => g.year)).toEqual(['2026', '2025']);
+      expect(groups[0]!.months.map((m) => m.month)).toEqual(['02']);
+      expect(groups[1]!.months.map((m) => m.month)).toEqual(['12', '06']);
+    });
+
+    it('M2-3: 切正序后月份小节顺序同时反转', () => {
+      const events = [mk('2026-03-10', 'evt_a'), mk('2026-01-05', 'evt_b')];
+      const desc = buildCards(events, defaultFilter, 'desc');
+      const asc = buildCards(events, defaultFilter, 'asc');
+      expect(desc[0]!.months.map((m) => m.month)).toEqual(['03', '01']);
+      expect(asc[0]!.months.map((m) => m.month)).toEqual(['01', '03']);
+    });
+
+    it('M2-4: 月份卡片合计等于扁平 cards（无遗漏无重复）', () => {
+      const events = [
+        mk('2026-03-10', 'evt_a'),
+        mk('2026-03-11', 'evt_b'),
+        mk('2026-07-01', 'evt_c'),
+      ];
+      const g = buildCards(events, defaultFilter, 'desc')[0]!;
+      const flatFromMonths = g.months.flatMap((m) => m.cards.map((c) => c.event.id));
+      expect(flatFromMonths).toEqual(g.cards.map((c) => c.event.id));
+      expect(g.months).toHaveLength(2);
+    });
+  });
 });

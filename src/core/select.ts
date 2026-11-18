@@ -31,8 +31,17 @@ export interface CardView {
   expandable: boolean;
 }
 
+export interface MonthGroup {
+  /** '01'..'12'；空串表示该事件日期缺失 */
+  month: string;
+  cards: CardView[];
+}
+
 export interface YearGroup {
   year: string;
+  /** v0.0.2 起：年内按月再分一层，月份小节顺序随年组内排序方向 */
+  months: MonthGroup[];
+  /** 该年全部卡片（扁平视图，供年份导航与既有调用方使用） */
   cards: CardView[];
 }
 
@@ -335,17 +344,26 @@ export function buildCards(
     }
   }
 
-  // 年份分组
+  // 年份分组（年内按月再分一层；cards 已按日期排序，故年月都是连续段）
   const groups: YearGroup[] = [];
   let currentGroup: YearGroup | null = null;
+  let currentMonth: MonthGroup | null = null;
 
   for (const card of cards) {
-    const year = card.event?.date ? card.event.date.slice(0, 4) : '';
+    const date = card.event?.date ?? '';
+    const year = date ? date.slice(0, 4) : '';
+    const month = date ? date.slice(5, 7) : '';
     if (!currentGroup || currentGroup.year !== year) {
-      currentGroup = { year, cards: [] };
+      currentGroup = { year, months: [], cards: [] };
+      currentMonth = null;
       groups.push(currentGroup);
     }
     currentGroup.cards.push(card);
+    if (!currentMonth || currentMonth.month !== month) {
+      currentMonth = { month, cards: [] };
+      currentGroup.months.push(currentMonth);
+    }
+    currentMonth.cards.push(card);
   }
 
   return groups;

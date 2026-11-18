@@ -545,6 +545,23 @@ body.is-locked,
   }
 }
 
+/* ===== 月份小节（二级时间轴：年份 → 月份 → 卡片） ===== */
+.htl-month-group {
+  position: relative;
+  margin: 0 0 var(--htl-space-4, 16px) 0;
+  padding-left: var(--htl-space-5, 24px);
+}
+
+.htl-month-heading {
+  margin: var(--htl-space-2, 8px) 0 var(--htl-space-2, 8px);
+  padding-left: var(--htl-space-2, 8px);
+  font-size: var(--htl-fs-md, 16px);
+  font-weight: 600;
+  color: var(--htl-color-text-muted, #64748b);
+  border-left: 3px solid var(--htl-color-accent, #4c9aff);
+  letter-spacing: 0.02em;
+}
+
 /* ===== 全局工具栏（补设计缺口：新建事件 / 导入 / 导出入口） ===== */
 #toolbar {
   padding: var(--htl-space-2, 8px) var(--htl-space-4, 16px) 0;
