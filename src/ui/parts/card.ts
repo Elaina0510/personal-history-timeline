@@ -33,6 +33,9 @@ export function renderCard(view: CardView, expanded: boolean): HTMLElement {
 
   const card = el('article', cardAttrs);
 
+  // 横向主轴上的事件节点（视觉元素，不参与交互）
+  card.appendChild(el('span', { class: 'htl-card__node', 'aria-hidden': 'true' }));
+
   // 1. 顶部第一行：日期、分类 chip、星级、展开箭头（可选）
   const topRowChildren: (Node | string)[] = [];
 
@@ -108,7 +111,7 @@ export function renderCard(view: CardView, expanded: boolean): HTMLElement {
   card.appendChild(titleEl);
 
   // (5) 最新记录简评（若无记录则显示「暂无记录」）
-  const summaryText = view.latestRecord ? view.latestRecord.summary : '暂无记录';
+  const summaryText = view.latestRecord ? view.latestRecord.summary : '—';
   const summaryEl = el('div', { class: 'htl-card__summary' }, [summaryText]);
   card.appendChild(summaryEl);
 

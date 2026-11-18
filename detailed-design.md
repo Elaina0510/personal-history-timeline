@@ -11,6 +11,7 @@
 | V0.0.1-R2 | 2026-11-18 | 任务 prompt 审查回写 4 处：新增 §7.2.1 `IssueCode → 用户可见文案` 映射表（原表只有场景、不列 code 名，29 个 code 中 27 个无处取文案）；§3 MOD-014 补完整 CSS 类名与主题变量清单（原只有"类名约定"一句话，T12 与 T14/T15/T16 无共同契约）；§6.3 补覆盖模式 `categories` 取并集；§8 补 `id.spec.ts` 的 I1~I4 用例表（原文只有 tasks/T04 里有，§8 缺组） | prompt 审查 |
 | V0.0.1-R3 | 2026-11-18 | 二级时间轴：REQ-012 升级为「年 → 月」两级分组（用户要求月份也作为一层时间轴）。MOD-006 `YearGroup` 增加 `months: MonthGroup[]`、`MonthGroup { month, cards }`；MOD-010 渲染月份小节且不吸顶；MOD-014 类名表补 `.htl-month-group` `.htl-month-heading`；§4.6 `data-focus-key` 补 `month.<YYYY>.<MM>`。空月份不占位 | 用户变更请求 |
 | V0.0.1-R4 | 2026-11-18 | 主视觉改为「一条跳动的时间轴」：主轴 `--htl-timeline-width` 2px→3px，`::before` 呼吸发光、`::after` 沿轴循环流动高光；新增轴上节点 `.htl-axis-node--year`（脉动+扩散光环）与 `--month`（按 `--i` 依次跳动）；卡片入场 `htlCardRise`。MOD-014 类名表补三个节点类，MOD-010 负责渲染节点（视觉全部在 CSS，`prefers-reduced-motion` 下自动关闭） | 用户变更请求 |
+| V0.0.1-R5 | 2026-11-18 | 主视觉再改：**横向**跳动线，从左到右贯穿；事件去掉卡片方框，上下交替挂在轴上（`.htl-card__node` 节点 + 11px 连接短线）；年份/月份标签脱离文档流浮在轴下方；年份导航移到右上避开轨道；无记录时简评占位由「暂无记录」改为「—」避免与星级位重复。MOD-010 渲染 `.htl-slot.is-up/.is-down` 交替槽位 | 用户变更请求 |
 本文件是下游任务拆分与代码生成的**权威冻结快照**。凡本文件与需求文档冲突，以实现本文件与需求文档中更严格的一条为准，并回填修订记录。
 
 ---
@@ -379,7 +380,8 @@ personal-history-timeline/
   | 容器 | `.htl-app` `.htl-timeline`（竖线） |
   | 年份 | `.htl-year-group` `.htl-year-heading`（sticky） |
   | 月份 | `.htl-month-group` `.htl-month-heading`（小节标题，不 sticky） |
-  | 主轴节点 | `.htl-axis-node` `.htl-axis-node--year`（脉动+光环） `.htl-axis-node--month`（沿轴依次跳动，靠 `--i` 递增延迟） |
+  | 主轴节点 | `.htl-axis-node` `.htl-axis-node--year` `.htl-axis-node--month`（横向主轴上的年/月刻度，月份按 `--i` 依次跳动） |
+  | 横向槽位 | `.htl-slot`（`.is-up` 上半槽贴轴底部 / `.is-down` 下半槽贴轴顶部） `.htl-card__node`（卡片贴轴的小圆点） |
   | 卡片 | `.htl-card` `.htl-card--expanded` `.htl-card__date` `.htl-card__title` `.htl-card__summary` `.htl-card__meta` `.htl-star` |
   | 筛选与导航 | `.htl-filter-bar` `.htl-chip` `.htl-chip--active` `.htl-year-nav` |
   | 浮层 | `.htl-modal` `.htl-toast` `.htl-lightbox` |

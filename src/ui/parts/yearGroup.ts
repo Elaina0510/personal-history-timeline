@@ -40,10 +40,15 @@ export function renderYearGroup(
     el('span', { class: 'htl-axis-node htl-axis-node--year', 'aria-hidden': 'true' })
   );
 
+  let sideIndex = 0;
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
       const expanded = isExpanded(cardView.event.id);
-      host.appendChild(renderCard(cardView, expanded));
+      // 横向主轴上上下交替：每个卡片装进一个 slot，slot 贴着轴线排布
+      const slot = el('div', { class: `htl-slot ${sideIndex % 2 === 0 ? 'is-up' : 'is-down'}` });
+      slot.appendChild(renderCard(cardView, expanded));
+      sideIndex += 1;
+      host.appendChild(slot);
     }
   };
 

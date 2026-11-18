@@ -445,10 +445,11 @@ select:focus {
 
 /* 年份锚点导航 */
 .htl-year-nav {
+  /* 横向时间轴下，年份导航移到右上角，避免压在轨道上 */
   position: fixed;
   right: var(--htl-space-4, 16px);
-  top: 50%;
-  transform: translateY(-50%);
+  top: 132px;
+  transform: none;
   z-index: var(--htl-z-nav, 30);
   display: flex;
   flex-direction: column;
@@ -770,4 +771,315 @@ body.is-locked,
 .htl-capacity-bar--block {
   background-color: var(--htl-color-danger, #e5484d);
   color: var(--htl-color-surface, #ffffff);
+}
+
+
+/* ==========================================================================
+ * 横向跳动主视觉（v0.0.2-R5）：一条从左到右的跳动线，事件上下交替挂在线上
+ * 覆盖上面的纵向时间轴规则，DOM 结构不变
+ * ========================================================================== */
+
+.htl-timeline {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  max-width: 100%;
+  height: 600px;
+  min-height: 600px;
+  padding: 40px 72px 40px 56px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+}
+
+/* 主轴：横贯全宽的跳动线 */
+.htl-timeline::before {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: var(--htl-timeline-width, 3px);
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--htl-color-accent, #4c9aff) 4%,
+    var(--htl-color-accent, #4c9aff) 96%,
+    transparent 100%
+  );
+  box-shadow: 0 0 14px 0 var(--htl-color-accent, #4c9aff);
+  opacity: 0.6;
+  animation: htlAxisBreath 2.6s ease-in-out infinite;
+}
+
+/* 沿横轴从左到右循环流动的高光 */
+.htl-timeline::after {
+  top: 50%;
+  left: 0;
+  width: 220px;
+  height: 9px;
+  transform: translateY(-50%);
+  border-radius: 6px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--htl-color-accent, #4c9aff) 45%,
+    #ffffff 50%,
+    var(--htl-color-accent, #4c9aff) 55%,
+    transparent
+  );
+  filter: blur(1.5px);
+  animation: htlAxisFlowX 3.6s ease-in-out infinite;
+}
+
+@keyframes htlAxisFlowX {
+  0% {
+    left: -220px;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+/* 年组 / 月组横排，全部落在同一条横轴上 */
+.htl-year-group,
+.htl-month-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 100%;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.htl-year-group {
+  margin-right: 40px;
+}
+
+.htl-month-group {
+  margin-right: 8px;
+}
+
+/* 年份/月份标签脱离文档流，悬浮在轴的上下，不再占位 */
+.htl-year-heading {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin: 6px 0 0 0;
+  padding: 0;
+  border: none;
+  background: none;
+  margin-top: 16px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--htl-color-accent, #4c9aff);
+  white-space: nowrap;
+  z-index: 12;
+}
+
+.htl-month-heading {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin: 44px 0 0 0;
+  padding: 0;
+  border-left: none;
+  font-size: var(--htl-fs-sm, 14px);
+  font-weight: 700;
+  color: var(--htl-color-text-muted, #64748b);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  z-index: 12;
+}
+
+.htl-month-heading::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--htl-color-accent, #4c9aff);
+  vertical-align: middle;
+}
+
+/* 轴上的年份节点 / 月份节点：落在这条横线上 */
+.htl-axis-node--year {
+  top: 50%;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--htl-color-bg, #f8f9fa);
+  z-index: 13;
+}
+
+.htl-axis-node--month {
+  top: 50%;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-width: 2.5px;
+  transform: translate(-50%, -50%);
+  animation: htlNodeTickX 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.16s);
+  z-index: 13;
+}
+
+@keyframes htlNodeTickX {
+  0%,
+  70%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.8);
+  }
+}
+
+/* 卡片：去掉框，变成线上的文字块，上下交替 */
+/* 卡片槽位：贴着轴线上下排布，卡片高度再变也不会跑偏 */
+.htl-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 208px;
+  width: 208px;
+  height: 50%;
+  margin-right: 32px;
+}
+
+/* 上半槽：卡片贴槽底（即轴线），下半槽：卡片贴槽顶（即轴线） */
+.htl-slot.is-up {
+  align-self: flex-start;
+  justify-content: flex-end;
+  padding-bottom: 12px;
+}
+
+.htl-slot.is-down {
+  align-self: flex-end;
+  justify-content: flex-start;
+  padding-top: 12px;
+}
+
+.htl-slot > .htl-card {
+  position: relative;
+  width: 100%;
+  max-height: 300px;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 标签不换行不压缩 */
+.htl-slot .htl-chip,
+.htl-slot .htl-star {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* 卡片与横轴的连接节点 */
+.htl-card__node {
+  position: absolute;
+  left: 50%;
+  width: 13px;
+  height: 13px;
+  margin-left: -6.5px;
+  border-radius: 50%;
+  background: var(--htl-color-bg, #f8f9fa);
+  border: 3px solid var(--htl-color-accent, #4c9aff);
+  box-shadow: 0 0 10px 0 var(--htl-color-accent, #4c9aff);
+  z-index: 14;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.htl-slot.is-up .htl-card__node {
+  bottom: -7px;
+}
+
+.htl-slot.is-down .htl-card__node {
+  top: -7px;
+}
+
+.htl-card:hover .htl-card__node,
+.htl-card--expanded .htl-card__node {
+  background: var(--htl-color-accent, #4c9aff);
+  transform: scale(1.35);
+}
+
+/* 卡片到节点的连接短线，交代归属 */
+.htl-slot > .htl-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  height: 11px;
+  margin-left: -1px;
+  background: var(--htl-color-accent, #4c9aff);
+  opacity: 0.55;
+}
+
+.htl-slot.is-up > .htl-card::after {
+  bottom: -11px;
+}
+
+.htl-slot.is-down > .htl-card::after {
+  top: -11px;
+}
+
+/* 折叠态文字块：无框、左对齐、紧凑 */
+.htl-slot .htl-card__title {
+  font-size: var(--htl-fs-md, 16px);
+  font-weight: 700;
+  margin: 6px 0 4px 0;
+  line-height: 1.35;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.htl-slot .htl-card__summary {
+  font-size: var(--htl-fs-sm, 13px);
+  line-height: 1.5;
+  color: var(--htl-color-text-muted, #64748b);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.htl-slot .htl-card__meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--htl-color-text-muted, #64748b);
+  opacity: 0.85;
+}
+
+/* 展开态：贴到节点一侧，仍不画框，只加一层极淡底色 */
+.htl-slot > .htl-card--expanded {
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  background: var(--htl-color-surface, #ffffff);
+  border-radius: var(--htl-radius-md, 8px);
+  box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.28);
 }
