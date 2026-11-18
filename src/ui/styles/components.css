@@ -983,8 +983,7 @@ body.is-locked,
   overflow: visible; /* 节点与引线要露到卡片外面 */
   margin: 0;
   padding: 0;
-  /* 与页面同色的实心背景：视觉上仍然“无框”，但折线不会从文字中间穿过 */
-  background: var(--htl-color-bg, #f8f9fa);
+  background: none; /* 真正无框：折线靠绕行避让，不靠色块遮挡 */
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -1014,11 +1013,11 @@ body.is-locked,
 }
 
 .htl-slot.is-up .htl-card__node {
-  bottom: -7px;
+  bottom: -22px; /* 19px 圆点整体落在卡片外侧，线才不会贴着字走 */
 }
 
 .htl-slot.is-down .htl-card__node {
-  top: -7px;
+  top: -22px;
 }
 
 .htl-card:hover .htl-card__node,
@@ -1032,18 +1031,18 @@ body.is-locked,
   position: absolute;
   left: 50%;
   width: 2px;
-  height: calc(var(--lift, 33px) + 3px);
+  height: 19px;
   margin-left: -1px;
   background: var(--htl-color-accent, #4c9aff);
   opacity: 0.3;
 }
 
 .htl-slot.is-up > .htl-card::after {
-  bottom: calc(-1 * (var(--lift, 33px) + 3px));
+  bottom: -19px;
 }
 
 .htl-slot.is-down > .htl-card::after {
-  top: calc(-1 * (var(--lift, 33px) + 3px));
+  top: -19px;
 }
 
 /* 卡片节点到轴的引线 */

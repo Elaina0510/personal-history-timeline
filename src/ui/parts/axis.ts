@@ -9,18 +9,44 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** 折线路径：硬折角连接各节点，首尾水平延伸（保持“曲折”而非曲线） */
-function sharpPath(points: { x: number; y: number }[], innerWidth: number): string {
+interface AxisPoint {
+  x: number;
+  y: number;
+  /** 该节点所属卡片的左右边界（相对容器），用于找卡片之间的空隙 */
+  cardLeft: number | null;
+  cardRight: number | null;
+}
+
+/**
+ * 正交折线：相邻节点之间先在卡片空隙里竖直穿行，再水平抵达下一节点。
+ * 这样折线永远走在卡片外面，不需要用色块盖住线。
+ */
+function sharpPath(points: AxisPoint[], innerWidth: number): string {
   if (points.length === 0) {
     return '';
   }
   const first = points[0]!;
   const last = points[points.length - 1]!;
-  let d = `M 0 ${first.y}`;
-  for (const p of points) {
-    d += ` L ${Math.round(p.x)} ${Math.round(p.y)}`;
+  const r = (n: number) => Math.round(n);
+
+  let d = `M 0 ${r(first.y)} L ${r(first.x)} ${r(first.y)}`;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const prev = points[i - 1]!;
+    const cur = points[i]!;
+    let gapX = (prev.x + cur.x) / 2;
+    if (
+      prev.cardRight !== null &&
+      cur.cardLeft !== null &&
+      cur.cardLeft - prev.cardRight > 8
+    ) {
+      // 卡片之间有真实空隙：竖段放在空隙中线
+      gapX = (prev.cardRight + cur.cardLeft) / 2;
+    }
+    d += ` L ${r(gapX)} ${r(prev.y)} L ${r(gapX)} ${r(cur.y)} L ${r(cur.x)} ${r(cur.y)}`;
   }
-  d += ` L ${innerWidth} ${last.y}`;
+
+  d += ` L ${innerWidth} ${r(last.y)}`;
   return d;
 }
 
@@ -56,11 +82,15 @@ function buildAxisPath(root: HTMLElement): string {
   const rootRect = root.getBoundingClientRect();
   const innerWidth = Math.max(0, Math.max(root.scrollWidth, rootRect.width) - padRight);
 
-  const points = nodes.map((node) => {
+  const points: AxisPoint[] = nodes.map((node) => {
     const r = node.getBoundingClientRect();
+    const card = node.closest('.htl-card') as HTMLElement | null;
+    const cr = card ? card.getBoundingClientRect() : null;
     return {
       x: Math.round(r.left - rootRect.left + r.width / 2),
       y: Math.round(r.top - rootRect.top + r.height / 2),
+      cardLeft: cr ? cr.left - rootRect.left : null,
+      cardRight: cr ? cr.right - rootRect.left : null,
     };
   });
 
@@ -94,11 +124,15 @@ export function drawAxis(root: HTMLElement): void {
   const width = Math.max(root.scrollWidth, rootRect.width);
   const height = Math.max(root.scrollHeight, rootRect.height);
 
-  const points = nodes.map((node) => {
+  const points: AxisPoint[] = nodes.map((node) => {
     const r = node.getBoundingClientRect();
+    const card = node.closest('.htl-card') as HTMLElement | null;
+    const cr = card ? card.getBoundingClientRect() : null;
     return {
       x: Math.round(r.left - rootRect.left + r.width / 2),
       y: Math.round(r.top - rootRect.top + r.height / 2),
+      cardLeft: cr ? cr.left - rootRect.left : null,
+      cardRight: cr ? cr.right - rootRect.left : null,
     };
   });
 
