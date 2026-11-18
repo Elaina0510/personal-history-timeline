@@ -15,7 +15,20 @@ upstream: proposal.md V0.0.1-R2 / detailed-design.md V0.0.1-R2
 ```
 src/main.ts
 public/data/events.json
+index.html      # 仅允许补一行 <script type="module" src="./src/main.ts"></script>
 ```
+
+## index.html 收尾（T01 遗留，必须补）
+T01 建骨架时 `src/main.ts` 还不存在，所以 `index.html` 里没有入口 script，页面打开是空白。
+本任务必须在 `</body>` 前补上：
+
+```html
+<script type="module" src="./src/main.ts"></script>
+```
+
+除此之外不许改 `index.html` 的任何其他内容（四个容器 id 已由 T01 定好）。
+注意路径写 `./src/main.ts`——`vite.config.ts` 的 `base: './'` 会让构建产物变成相对路径资源，这里保持一致。
+
 
 ## 装配顺序（不可调换）
 ```ts
@@ -67,7 +80,7 @@ bindActions(handler);          // 只调一次，必须在首次 render 之后
 
 先读 detailed-design.md 的 §3 MOD-015、§2.1 依赖方向、§4.6 DOM 契约与 data-action 表、§6.5 关联跳转、§7.2 场景表；以及 proposal.md 的 REQ-008/017/021。
 
-任务：写 src/main.ts（装配与首屏）与 public/data/events.json（2 条示例种子）。
+任务：写 src/main.ts（装配与首屏）、public/data/events.json（2 条示例种子），并在 index.html 的 </body> 前补一行 <script type="module" src="./src/main.ts"></script>（T01 建骨架时 main.ts 尚不存在，这是必然遗留，除这一行不许动 index.html 其他内容）。
 
 装配顺序必须是：createStorage/createClock → new Store → loadSeedRaw → store.init(seedRaw) → store.subscribe(s => render(s)) → render(store.getState()) → bindActions(handler)。bindActions 只许调一次，且必须在首次 render 之后——先绑定后首屏渲染即为缺陷。
 
