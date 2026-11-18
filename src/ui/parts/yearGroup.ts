@@ -35,6 +35,10 @@ export function renderYearGroup(
     [headingText]
   );
   groupEl.appendChild(headingEl);
+  // 轴上年份节点（脉动）
+  groupEl.appendChild(
+    el('span', { class: 'htl-axis-node htl-axis-node--year', 'aria-hidden': 'true' })
+  );
 
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
@@ -52,7 +56,7 @@ export function renderYearGroup(
   }
 
   // 二级时间轴：年份 → 月份 → 卡片
-  for (const monthGroup of months) {
+  for (const [monthIndex, monthGroup] of months.entries()) {
     const monthLabel = monthGroup.month ? `${Number(monthGroup.month)} 月` : '未知月份';
     const monthEl = el('section', {
       class: 'htl-month-group',
@@ -72,6 +76,13 @@ export function renderYearGroup(
         },
         [monthLabel]
       )
+    );
+    monthEl.appendChild(
+      el('span', {
+        class: 'htl-axis-node htl-axis-node--month',
+        'aria-hidden': 'true',
+        style: `--i: ${monthIndex}`,
+      })
     );
     renderCardsInto(monthEl, monthGroup.cards);
     groupEl.appendChild(monthEl);

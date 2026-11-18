@@ -121,14 +121,78 @@ select:focus {
   box-sizing: border-box;
 }
 
+/* 主视觉：一条跳动的时间轴主轴
+ * - ::before 是渐隐主轴线（两端淡出）
+ * - ::after 是一道沿轴循环流动的高光，形成"跳动"的节奏感
+ * - 轴上的年份/月份节点见下方 .htl-axis-node
+ */
 .htl-timeline::before {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
   left: var(--htl-space-5, 24px);
-  width: var(--htl-timeline-width, 2px);
-  background-color: var(--htl-color-border, #e2e8f0);
+  width: var(--htl-timeline-width, 3px);
+  border-radius: 3px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--htl-color-accent, #4c9aff) 10%,
+    var(--htl-color-accent, #4c9aff) 90%,
+    transparent 100%
+  );
+  opacity: 0.6;
+  box-shadow: 0 0 10px 0 var(--htl-color-accent, #4c9aff);
+  animation: htlAxisBreath 2.6s ease-in-out infinite;
+}
+
+/* 整条轴的"心跳"：与节点同节拍明暗呼吸 */
+@keyframes htlAxisBreath {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.htl-timeline::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--htl-space-5, 24px) - 3px);
+  width: 9px;
+  height: 190px;
+  border-radius: 6px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--htl-color-accent, #4c9aff) 45%,
+    #ffffff 50%,
+    var(--htl-color-accent, #4c9aff) 55%,
+    transparent
+  );
+  filter: blur(1.5px);
+  opacity: 0;
+  pointer-events: none;
+  animation: htlAxisFlow 3.6s ease-in-out infinite;
+}
+
+@keyframes htlAxisFlow {
+  0% {
+    top: -140px;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -560,6 +624,108 @@ body.is-locked,
   color: var(--htl-color-text-muted, #64748b);
   border-left: 3px solid var(--htl-color-accent, #4c9aff);
   letter-spacing: 0.02em;
+}
+
+/* ===== 轴上的跳动节点（主视觉） ===== */
+.htl-axis-node {
+  position: absolute;
+  left: 9.5px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 11;
+}
+
+.htl-axis-node--year {
+  top: 24px;
+  width: 18px;
+  height: 18px;
+  background: var(--htl-color-accent, #4c9aff);
+  box-shadow: 0 0 0 4px var(--htl-color-bg, #f8f9fa), 0 0 12px 0 var(--htl-color-accent, #4c9aff);
+  animation: htlNodePulse 2.6s ease-in-out infinite;
+}
+
+/* 年份节点向外扩散的光环，像心跳 */
+.htl-axis-node--year::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--htl-color-accent, #4c9aff);
+  animation: htlNodeRing 2.6s ease-out infinite;
+}
+
+@keyframes htlNodePulse {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.14);
+  }
+}
+
+@keyframes htlNodeRing {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.htl-axis-node--month {
+  top: 21px;
+  width: 11px;
+  height: 11px;
+  background: var(--htl-color-bg, #f8f9fa);
+  border: 2.5px solid var(--htl-color-accent, #4c9aff);
+  transition: transform 0.22s ease, background-color 0.22s ease, box-shadow 0.22s ease;
+  /* 沿轴依次跳动：每个月份节点按 --i 递增延迟，形成波浪 */
+  animation: htlNodeTick 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.16s);
+}
+
+@keyframes htlNodeTick {
+  0%,
+  70%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    box-shadow: 0 0 0 0 var(--htl-color-accent, #4c9aff);
+  }
+  35% {
+    transform: translateX(-50%) scale(1.75);
+    box-shadow: 0 0 0 5px rgba(76, 154, 255, 0.18);
+  }
+}
+
+/* 该月有卡片展开时，节点亮起来（轴的"跳动点"跟着状态走） */
+.htl-month-group:has(.htl-card--expanded) .htl-axis-node--month {
+  background: var(--htl-color-accent, #4c9aff);
+  transform: translateX(-50%) scale(1.45);
+}
+
+/* 卡片沿轴上浮入场：全量重绘时形成整体轻微起伏 */
+.htl-month-group .htl-card,
+.htl-timeline > .htl-year-group > .htl-card {
+  animation: htlCardRise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes htlCardRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ===== 全局工具栏（补设计缺口：新建事件 / 导入 / 导出入口） ===== */
