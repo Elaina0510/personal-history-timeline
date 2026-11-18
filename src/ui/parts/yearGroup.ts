@@ -62,7 +62,13 @@ export function renderYearGroup(
         class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
         style: `--lift: ${lift}px; --gap: ${gap}px;`,
       });
-      slot.appendChild(renderCard(cardView, expanded));
+      const cardEl = renderCard(cardView, expanded);
+      // 位置直接写行内样式，避免被其它 .htl-card 规则覆盖
+      cardEl.style.position = 'absolute';
+      cardEl.style.left = '0';
+      cardEl.style.right = '0';
+      cardEl.style[isUp ? 'bottom' : 'top'] = `calc(50% + ${lift}px)`;
+      slot.appendChild(cardEl);
       host.appendChild(slot);
     }
   };

@@ -956,29 +956,26 @@ body.is-locked,
 /* 卡片：去掉框，变成线上的文字块，上下交替 */
 /* 卡片槽位：贴着轴线上下排布，卡片高度再变也不会跑偏 */
 .htl-slot {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   flex: 0 0 208px;
   width: 208px;
-  height: 50%;
+  height: 100%;
   margin-right: var(--gap, 32px);
 }
 
-/* 上半槽：卡片贴槽底（即轴线），下半槽：卡片贴槽顶（即轴线） */
-.htl-slot.is-up {
-  align-self: flex-start;
-  justify-content: flex-end;
-  padding-bottom: calc(var(--lift, 40px) + 10px);
+/* 卡片用绝对定位钉在轴线两侧：距离由 --lift 精确控制，不会被内容和弹性布局带偏 */
+.htl-slot.is-up > .htl-card {
+  bottom: calc(50% + var(--lift, 70px));
 }
 
-.htl-slot.is-down {
-  align-self: flex-end;
-  justify-content: flex-start;
-  padding-top: calc(var(--lift, 40px) + 10px);
+.htl-slot.is-down > .htl-card {
+  top: calc(50% + var(--lift, 70px));
 }
 
 .htl-slot > .htl-card {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
   width: 100%;
   overflow: visible; /* 节点与引线要露到卡片外面 */
   margin: 0;
