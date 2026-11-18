@@ -56,8 +56,10 @@ export function renderYearGroup(
       // 无规则排布：用事件 id 算稳定的伪随机，决定挂上方还是下方、离轴多远、左右留多少
       const sig = hashString(`${cardView.event.id}|${cardView.event.date}|${cardView.event.title}`);
       const isUp = sig % 2 === 0;
-      const lift = 70 + (sig % 6) * 22; // 70..180px 离轴距离（落差拉大）
-      const gap = 44 + ((sig >> 3) % 6) * 12; // 44..104px 左右间距（给折线留穿行空间）
+      // 窄屏（手机）压缩落差与间距，避免一次只能看到一张卡、上下全是空白
+      const narrow = typeof window !== 'undefined' && window.innerWidth < 720;
+      const lift = narrow ? 16 + (sig % 4) * 9 : 70 + (sig % 6) * 22; // 手机 16..43 / 桌面 70..180
+      const gap = narrow ? 14 + ((sig >> 3) % 3) * 8 : 44 + ((sig >> 3) % 6) * 12; // 手机 14..30 / 桌面 44..104
       const slot = el('div', {
         class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
         style: `--lift: ${lift}px; --gap: ${gap}px;`,

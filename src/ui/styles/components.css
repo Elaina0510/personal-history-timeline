@@ -1140,3 +1140,73 @@ body.is-locked,
     animation: none;
   }
 }
+
+
+/* ==========================================================================
+ * 移动端适配（v0.0.2-R16）：窄屏下压缩轴高、放宽卡片、缩短落差
+ * ========================================================================== */
+@media (max-width: 720px) {
+  .htl-timeline {
+    height: 400px;
+    min-height: 400px;
+    padding: 20px 12px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .htl-slot {
+    flex: 0 0 82vw;
+    width: 82vw;
+    margin-right: var(--gap, 16px);
+  }
+
+  .htl-slot > .htl-card {
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .htl-year-heading {
+    font-size: 15px;
+    margin-top: 12px;
+  }
+
+  .htl-month-heading {
+    font-size: 12px;
+    margin-top: 34px;
+  }
+
+  .htl-year-group {
+    margin-right: 24px;
+  }
+
+  /* 手机上折线细一点，别抢文字的视觉重量 */
+  .htl-axis-path {
+    stroke-width: 3.5;
+  }
+
+  .htl-card__node {
+    width: 15px;
+    height: 15px;
+    margin-left: -7.5px;
+  }
+
+  .htl-slot.is-up .htl-card__node {
+    bottom: -19px;
+  }
+
+  .htl-slot.is-down .htl-card__node {
+    top: -19px;
+  }
+
+  .htl-slot > .htl-card::after {
+    height: 16px;
+  }
+
+  .htl-slot.is-up > .htl-card::after {
+    bottom: -16px;
+  }
+
+  .htl-slot.is-down > .htl-card::after {
+    top: -16px;
+  }
+}
