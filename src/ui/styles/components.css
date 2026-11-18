@@ -718,14 +718,13 @@ body.is-locked,
   animation: htlCardRise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* 只做淡入：位置由 JS 浮动动画控制，两者不能抢 transform */
 @keyframes htlCardRise {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
@@ -1118,4 +1117,26 @@ body.is-locked,
 /* 折线取代了水平主轴后，年/月刻度点与卡片节点重复，隐藏它们只留标签 */
 .htl-axis-node {
   display: none;
+}
+
+
+/* 节点呼吸：与卡片浮动错开相位，让时间轴“活”起来 */
+.htl-card__node {
+  animation: htlNodeBreath 3.4s ease-in-out infinite;
+}
+
+@keyframes htlNodeBreath {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1.5px var(--htl-color-accent, #4c9aff), 0 0 8px 0 var(--htl-color-accent, #4c9aff);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px var(--htl-color-accent, #4c9aff), 0 0 18px 4px var(--htl-color-accent, #4c9aff);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .htl-card__node {
+    animation: none;
+  }
 }

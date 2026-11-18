@@ -38,6 +38,8 @@ function sharpPath(points: AxisPoint[], innerWidth: number): string {
 let axisObserver: ResizeObserver | null = null;
 let axisRafId = 0;
 let axisLastPath = '';
+let floatRafId = 0;
+let floatStart = 0;
 
 /** 布局稳定后重算一次（字体/图片/展开态都会改变节点位置） */
 function scheduleAxis(root: HTMLElement): void {
@@ -172,6 +174,8 @@ export function drawAxis(root: HTMLElement): void {
   axisLastPath = d;
   scheduleAxis(root);
 
+  startFloat(root);
+
   if (typeof ResizeObserver !== 'undefined') {
     if (!axisObserver) {
       axisObserver = new ResizeObserver(() => {
@@ -187,4 +191,53 @@ export function drawAxis(root: HTMLElement): void {
       axisObserver.observe(card);
     }
   }
+}
+
+/**
+ * 灵动层：卡片按正弦缓慢上下浮动（各自相位错开），折线每帧跟着节点重算，
+ * 视觉上整条时间轴在轻轻呼吸。
+ * prefers-reduced-motion 时完全不启动。
+ */
+function startFloat(root: HTMLElement): void {
+  if (floatRafId) {
+    cancelAnimationFrame(floatRafId);
+    floatRafId = 0;
+  }
+  if (typeof window === 'undefined' || !window.matchMedia) {
+    return;
+  }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+
+  const cards = Array.from(root.querySelectorAll<HTMLElement>('.htl-card'));
+  if (cards.length === 0) {
+    return;
+  }
+  floatStart = 0;
+
+  const step = (ts: number): void => {
+    if (!floatStart) {
+      floatStart = ts;
+    }
+    const t = (ts - floatStart) / 1000;
+
+    cards.forEach((card, index) => {
+      const phase = (index % 6) * 0.85;
+      const amp = 2.5 + (index % 3) * 1.2; // 2.5~4.9px，深浅不一
+      const dy = Math.sin(t * 0.7 + phase) * amp;
+      card.style.transform = `translateY(${dy.toFixed(2)}px)`;
+    });
+
+    const d = buildAxisPath(root);
+    const path = root.querySelector<SVGPathElement>('.htl-axis-path');
+    if (path && d && d !== axisLastPath) {
+      axisLastPath = d;
+      path.setAttribute('d', d);
+    }
+
+    floatRafId = requestAnimationFrame(step);
+  };
+
+  floatRafId = requestAnimationFrame(step);
 }
