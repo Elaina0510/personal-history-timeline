@@ -12,6 +12,7 @@
 | V0.0.1-R3 | 2026-11-18 | 二级时间轴：REQ-012 升级为「年 → 月」两级分组（用户要求月份也作为一层时间轴）。MOD-006 `YearGroup` 增加 `months: MonthGroup[]`、`MonthGroup { month, cards }`；MOD-010 渲染月份小节且不吸顶；MOD-014 类名表补 `.htl-month-group` `.htl-month-heading`；§4.6 `data-focus-key` 补 `month.<YYYY>.<MM>`。空月份不占位 | 用户变更请求 |
 | V0.0.1-R4 | 2026-11-18 | 主视觉改为「一条跳动的时间轴」：主轴 `--htl-timeline-width` 2px→3px，`::before` 呼吸发光、`::after` 沿轴循环流动高光；新增轴上节点 `.htl-axis-node--year`（脉动+扩散光环）与 `--month`（按 `--i` 依次跳动）；卡片入场 `htlCardRise`。MOD-014 类名表补三个节点类，MOD-010 负责渲染节点（视觉全部在 CSS，`prefers-reduced-motion` 下自动关闭） | 用户变更请求 |
 | V0.0.1-R5 | 2026-11-18 | 主视觉再改：**横向**跳动线，从左到右贯穿；事件去掉卡片方框，上下交替挂在轴上（`.htl-card__node` 节点 + 11px 连接短线）；年份/月份标签脱离文档流浮在轴下方；年份导航移到右上避开轨道；无记录时简评占位由「暂无记录」改为「—」避免与星级位重复。MOD-010 渲染 `.htl-slot.is-up/.is-down` 交替槽位 | 用户变更请求 |
+| V0.0.1-R6 | 2026-11-18 | 主轴改为 **SVG 曲折线**：新增 `src/ui/parts/axis.ts`，读取所有 `.htl-card__node` 的中心坐标生成折线 path（`M/L` 折点串），首尾水平延伸到容器两端；卡片上下交替 → 折线天然 zigzag；渐变描边 + 呼吸动画，去掉水平直线与流动光带；`ResizeObserver` + rAF 在布局稳定后重算，避免与卡片脱节；年/月刻度点隐藏（标签保留） | 用户变更请求 |
 本文件是下游任务拆分与代码生成的**权威冻结快照**。凡本文件与需求文档冲突，以实现本文件与需求文档中更严格的一条为准，并回填修订记录。
 
 ---
@@ -382,6 +383,7 @@ personal-history-timeline/
   | 月份 | `.htl-month-group` `.htl-month-heading`（小节标题，不 sticky） |
   | 主轴节点 | `.htl-axis-node` `.htl-axis-node--year` `.htl-axis-node--month`（横向主轴上的年/月刻度，月份按 `--i` 依次跳动） |
   | 横向槽位 | `.htl-slot`（`.is-up` 上半槽贴轴底部 / `.is-down` 下半槽贴轴顶部） `.htl-card__node`（卡片贴轴的小圆点） |
+  | 曲折主轴 | `.htl-axis-svg`（`#timeline-root` 内绝对定位的 SVG） `.htl-axis-path`（穿过各节点的折线，渐变描边） |
   | 卡片 | `.htl-card` `.htl-card--expanded` `.htl-card__date` `.htl-card__title` `.htl-card__summary` `.htl-card__meta` `.htl-star` |
   | 筛选与导航 | `.htl-filter-bar` `.htl-chip` `.htl-chip--active` `.htl-year-nav` |
   | 浮层 | `.htl-modal` `.htl-toast` `.htl-lightbox` |

@@ -785,8 +785,8 @@ body.is-locked,
   align-items: stretch;
   gap: 0;
   max-width: 100%;
-  height: 600px;
-  min-height: 600px;
+  height: 680px;
+  min-height: 680px;
   padding: 40px 72px 40px 56px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -795,6 +795,7 @@ body.is-locked,
 
 /* 主轴：横贯全宽的跳动线 */
 .htl-timeline::before {
+  display: none; /* 主轴改由 SVG 折线绘制（.htl-axis-path） */
   top: 50%;
   bottom: auto;
   left: 0;
@@ -817,6 +818,7 @@ body.is-locked,
 
 /* 沿横轴从左到右循环流动的高光 */
 .htl-timeline::after {
+  display: none; /* 去掉流动光带，改为静态曲折线 */
   top: 50%;
   left: 0;
   width: 220px;
@@ -966,20 +968,19 @@ body.is-locked,
 .htl-slot.is-up {
   align-self: flex-start;
   justify-content: flex-end;
-  padding-bottom: 12px;
+  padding-bottom: 40px;
 }
 
 .htl-slot.is-down {
   align-self: flex-end;
   justify-content: flex-start;
-  padding-top: 12px;
+  padding-top: 40px;
 }
 
 .htl-slot > .htl-card {
   position: relative;
   width: 100%;
-  max-height: 300px;
-  overflow: hidden;
+  overflow: visible; /* 节点与引线要露到卡片外面 */
   margin: 0;
   padding: 0;
   background: none;
@@ -1030,19 +1031,22 @@ body.is-locked,
   position: absolute;
   left: 50%;
   width: 2px;
-  height: 11px;
+  height: 33px;
   margin-left: -1px;
   background: var(--htl-color-accent, #4c9aff);
-  opacity: 0.55;
+  opacity: 0.3;
 }
 
 .htl-slot.is-up > .htl-card::after {
-  bottom: -11px;
+  bottom: -33px;
 }
 
 .htl-slot.is-down > .htl-card::after {
-  top: -11px;
+  top: -33px;
 }
+
+/* 卡片节点到轴的引线 */
+
 
 /* 折叠态文字块：无框、左对齐、紧凑 */
 .htl-slot .htl-card__title {
@@ -1078,8 +1082,43 @@ body.is-locked,
 .htl-slot > .htl-card--expanded {
   max-height: 440px;
   overflow-y: auto;
+  overflow-x: visible;
   padding: 10px 12px;
   background: var(--htl-color-surface, #ffffff);
   border-radius: var(--htl-radius-md, 8px);
   box-shadow: 0 6px 24px -12px rgba(15, 23, 42, 0.28);
+}
+
+
+/* ===== 曲折主轴（SVG 折线，穿过每个事件节点） ===== */
+.htl-axis-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+.htl-axis-path {
+  fill: none;
+  stroke: url(#htl-axis-gradient);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px rgba(76, 154, 255, 0.55));
+  animation: htlAxisBreath 2.8s ease-in-out infinite;
+}
+
+/* 折线上的节点压在线之上 */
+.htl-card__node,
+.htl-axis-node {
+  z-index: 5;
+}
+
+
+/* 折线取代了水平主轴后，年/月刻度点与卡片节点重复，隐藏它们只留标签 */
+.htl-axis-node {
+  display: none;
 }
