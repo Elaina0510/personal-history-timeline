@@ -12,6 +12,7 @@ import { openEventForm, openRecordForm, closeFormModal, setStore as setFormStore
 import { handleFilterAction, setStore as setFilterStore } from './ui/parts/filterBar';
 import { openImportModal, openExportModal, openRestoreBackupConfirm, setStore as setImportStore } from './ui/parts/importExport';
 import { renderToolbar } from './ui/parts/toolbar';
+import { mountCapacityBar } from './ui/parts/capacityBar';
 let store: Store;
 async function handler(action: string, id: string | undefined, ev: Event): Promise<void> {
   const events = store.getState().data.events;
@@ -71,6 +72,7 @@ async function init(): Promise<void> {
   store.subscribe((s) => render(s));
   render(store.getState());
   renderToolbar();
+  mountCapacityBar(store);
   bindActions(handler);
   for (const issue of res.issues) {
     if (issue.code === 'STORAGE_UNAVAILABLE') {

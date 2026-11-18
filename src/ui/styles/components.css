@@ -29,7 +29,10 @@ body {
   color: var(--htl-color-text, #1e293b);
   background-color: var(--htl-color-bg, #f8f9fa);
   line-height: 1.5;
-  overflow-x: hidden;
+  /* overflow-x: hidden 会让 body 变成滚动容器（计算值 overflow-y 变 auto），
+     导致 window.scrollTo / window.scrollY 全部失效（REQ-017 锚点跳转因此不动）。
+     用 clip 裁切横向溢出但不建立滚动容器，滚动仍归属文档。 */
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -569,4 +572,19 @@ body.is-locked,
 .htl-toolbar__btn:hover {
   border-color: var(--htl-color-accent, #4c9aff);
   color: var(--htl-color-accent, #4c9aff);
+}
+
+/* ===== 容量水位提示条（补设计缺口：§7.2 要求的水位警示条无模块实现） ===== */
+.htl-capacity-bar {
+  padding: var(--htl-space-2, 8px) var(--htl-space-4, 16px);
+  font-size: var(--htl-fs-sm, 14px);
+  text-align: center;
+  background-color: var(--htl-color-star, #f59e0b);
+  color: var(--htl-color-text, #1e293b);
+  background-blend-mode: soft-light;
+}
+
+.htl-capacity-bar--block {
+  background-color: var(--htl-color-danger, #e5484d);
+  color: var(--htl-color-surface, #ffffff);
 }
