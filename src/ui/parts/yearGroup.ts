@@ -8,6 +8,16 @@ import { el } from '../dom';
 import type { YearGroup } from '../../core/select';
 import { renderCard } from './card';
 
+/** 稳定的小哈希：同一事件每次重绘得到同样的“无规则”位置 */
+function hashString(input: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
 export function renderYearGroup(
   group: YearGroup,
   expandedIds?: ReadonlySet<string> | ((id: string) => boolean)
@@ -40,14 +50,19 @@ export function renderYearGroup(
     el('span', { class: 'htl-axis-node htl-axis-node--year', 'aria-hidden': 'true' })
   );
 
-  let sideIndex = 0;
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
       const expanded = isExpanded(cardView.event.id);
-      // 横向主轴上上下交替：每个卡片装进一个 slot，slot 贴着轴线排布
-      const slot = el('div', { class: `htl-slot ${sideIndex % 2 === 0 ? 'is-up' : 'is-down'}` });
+      // 无规则排布：用事件 id 算稳定的伪随机，决定挂上方还是下方、离轴多远、左右留多少
+      const sig = hashString(`${cardView.event.id}|${cardView.event.date}|${cardView.event.title}`);
+      const isUp = sig % 2 === 0;
+      const lift = 26 + (sig % 7) * 9; // 26..80px 离轴距离
+      const gap = 18 + ((sig >> 3) % 5) * 10; // 18..58px 左右间距
+      const slot = el('div', {
+        class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
+        style: `--lift: ${lift}px; --gap: ${gap}px;`,
+      });
       slot.appendChild(renderCard(cardView, expanded));
-      sideIndex += 1;
       host.appendChild(slot);
     }
   };

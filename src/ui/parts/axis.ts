@@ -9,6 +9,35 @@
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+/** Catmull-Rom → 三次贝塞尔：让折线变柔和的手绘曲线，首尾保持水平 */
+function smoothPath(points: { x: number; y: number }[], innerWidth: number): string {
+  if (points.length === 0) {
+    return '';
+  }
+  const all = [{ x: 0, y: points[0]!.y }, ...points, { x: innerWidth, y: points[points.length - 1]!.y }];
+  const r = (n: number) => Math.round(n);
+  const firstSeg = all[0]!;
+  const secondSeg = all[1]!;
+  let d = `M ${firstSeg.x} ${firstSeg.y} L ${secondSeg.x} ${secondSeg.y}`;
+
+  for (let i = 1; i < all.length - 2; i += 1) {
+    const p0 = all[i - 1] ?? all[i]!;
+    const p1 = all[i]!;
+    const p2 = all[i + 1]!;
+    const p3 = all[i + 2] ?? p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${r(c1x)} ${r(c1y)} ${r(c2x)} ${r(c2y)} ${r(p2.x)} ${r(p2.y)}`;
+  }
+
+  const tail = all[all.length - 1]!;
+  d += ` L ${tail.x} ${tail.y}`;
+  return d;
+}
+
+
 let axisObserver: ResizeObserver | null = null;
 let axisRafId = 0;
 let axisLastPath = '';
@@ -56,16 +85,7 @@ function buildAxisPath(root: HTMLElement): string {
     return '';
   }
 
-  let d = `M 0 ${first.y}`;
-  d += ` L ${first.x} ${first.y}`;
-  for (let i = 1; i < points.length; i += 1) {
-    const p = points[i];
-    if (p) {
-      d += ` L ${p.x} ${p.y}`;
-    }
-  }
-  d += ` L ${innerWidth} ${last.y}`;
-  return d;
+  return smoothPath(points, innerWidth);
 }
 
 export function drawAxis(root: HTMLElement): void {
@@ -104,15 +124,7 @@ export function drawAxis(root: HTMLElement): void {
   }
 
   const innerWidth = Math.max(0, width - padRight);
-  let d = `M 0 ${first.y}`;
-  d += ` L ${first.x} ${first.y}`;
-  for (let i = 1; i < points.length; i += 1) {
-    const p = points[i];
-    if (p) {
-      d += ` L ${p.x} ${p.y}`;
-    }
-  }
-  d += ` L ${innerWidth} ${last.y}`;
+  const d = smoothPath(points, innerWidth);
 
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('class', 'htl-axis-svg');

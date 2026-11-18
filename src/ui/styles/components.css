@@ -961,20 +961,20 @@ body.is-locked,
   flex: 0 0 208px;
   width: 208px;
   height: 50%;
-  margin-right: 32px;
+  margin-right: var(--gap, 32px);
 }
 
 /* 上半槽：卡片贴槽底（即轴线），下半槽：卡片贴槽顶（即轴线） */
 .htl-slot.is-up {
   align-self: flex-start;
   justify-content: flex-end;
-  padding-bottom: 40px;
+  padding-bottom: calc(var(--lift, 40px) + 10px);
 }
 
 .htl-slot.is-down {
   align-self: flex-end;
   justify-content: flex-start;
-  padding-top: 40px;
+  padding-top: calc(var(--lift, 40px) + 10px);
 }
 
 .htl-slot > .htl-card {
@@ -1031,18 +1031,18 @@ body.is-locked,
   position: absolute;
   left: 50%;
   width: 2px;
-  height: 33px;
+  height: calc(var(--lift, 33px) + 3px);
   margin-left: -1px;
   background: var(--htl-color-accent, #4c9aff);
   opacity: 0.3;
 }
 
 .htl-slot.is-up > .htl-card::after {
-  bottom: -33px;
+  bottom: calc(-1 * (var(--lift, 33px) + 3px));
 }
 
 .htl-slot.is-down > .htl-card::after {
-  top: -33px;
+  top: calc(-1 * (var(--lift, 33px) + 3px));
 }
 
 /* 卡片节点到轴的引线 */
