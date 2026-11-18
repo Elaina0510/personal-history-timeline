@@ -1,0 +1,80 @@
+:root {
+  /* ==========================================
+   * 1. 颜色 (Colors)
+   * ========================================== */
+  --htl-color-bg: #f8f9fa;
+  --htl-color-surface: #ffffff;
+  --htl-color-border: #e2e8f0;
+  --htl-color-text: #1e293b;
+  --htl-color-text-muted: #64748b;
+  --htl-color-accent: #4c9aff;
+  --htl-color-star: #f59e0b;
+  --htl-color-danger: #e5484d;
+  --htl-color-success: #10b981;
+
+  /* 遮罩扩展色 */
+  --htl-color-overlay: #00000080;
+  --htl-color-overlay-dark: #000000cc;
+
+  /* ==========================================
+   * 2. 分类色板 6 槽 (Category Palette)
+   * ========================================== */
+  --htl-cat-1: #3b82f6;
+  --htl-cat-2: #10b981;
+  --htl-cat-3: #8b5cf6;
+  --htl-cat-4: #f97316;
+  --htl-cat-5: #ec4899;
+  --htl-cat-6: #06b6d4;
+
+  /* ==========================================
+   * 3. 字体 (Fonts)
+   * ========================================== */
+  --htl-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --htl-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* ==========================================
+   * 4. 字号 (Font Sizes)
+   * ========================================== */
+  --htl-fs-xs: 12px;
+  --htl-fs-sm: 14px;
+  --htl-fs-md: 16px;
+  --htl-fs-lg: 20px;
+  --htl-fs-xl: 24px;
+
+  /* ==========================================
+   * 5. 间距 (Spacing)
+   * ========================================== */
+  --htl-space-1: 4px;
+  --htl-space-2: 8px;
+  --htl-space-3: 12px;
+  --htl-space-4: 16px;
+  --htl-space-5: 24px;
+  --htl-space-6: 32px;
+
+  /* ==========================================
+   * 6. 形状 (Shapes)
+   * ========================================== */
+  --htl-radius-sm: 4px;
+  --htl-radius-md: 8px;
+  --htl-radius-lg: 12px;
+  --htl-timeline-width: 2px;
+  --htl-card-max-width: 800px;
+
+  /* ==========================================
+   * 7. 动效与阴影 (Transitions & Shadows)
+   * ========================================== */
+  --htl-transition-fast: 150ms ease;
+  --htl-transition-base: 250ms ease;
+  --htl-shadow-card: 0 1px 3px #0000001a;
+
+  /* ==========================================
+   * 8. 层级体系 (Z-Index Hierarchy)
+   * ========================================== */
+  --htl-z-sticky: 10;
+  --htl-z-filter: 20;
+  --htl-z-nav: 30;
+  --htl-z-drawer: 50;
+  --htl-z-modal: 100;
+  --htl-z-lightbox: 200;
+  --htl-z-toast: 300;
+}
