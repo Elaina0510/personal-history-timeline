@@ -56,8 +56,8 @@ export function renderYearGroup(
       // 无规则排布：用事件 id 算稳定的伪随机，决定挂上方还是下方、离轴多远、左右留多少
       const sig = hashString(`${cardView.event.id}|${cardView.event.date}|${cardView.event.title}`);
       const isUp = sig % 2 === 0;
-      const lift = 26 + (sig % 7) * 9; // 26..80px 离轴距离
-      const gap = 18 + ((sig >> 3) % 5) * 10; // 18..58px 左右间距
+      const lift = 70 + (sig % 6) * 22; // 70..180px 离轴距离（落差拉大）
+      const gap = 14 + ((sig >> 3) % 6) * 14; // 14..84px 左右间距
       const slot = el('div', {
         class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
         style: `--lift: ${lift}px; --gap: ${gap}px;`,
