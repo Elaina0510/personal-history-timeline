@@ -1,1 +1,81 @@
-{"schemaVersion":1,"appVersion":"0.0.1","savedAt":"2026-11-18T00:00:00+08:00","categories":["游戏发售","AI模型","硬件发布","软件工具","学术论文","影音作品","生活事件","其他"],"ui":{"sortOrder":"desc"},"events":[]}
+{
+  "schemaVersion": 1,
+  "appVersion": "0.0.1",
+  "savedAt": "2026-11-18T12:00:00+08:00",
+  "categories": [
+    "游戏发售",
+    "AI模型",
+    "硬件发布",
+    "软件工具",
+    "学术论文",
+    "影音作品",
+    "生活事件",
+    "其他"
+  ],
+  "ui": {
+    "sortOrder": "desc"
+  },
+  "events": [
+    {
+      "id": "evt_1700000000000_seed01",
+      "date": "2025-05-20",
+      "title": "示例事件 A：跨平台框架发布",
+      "category": "软件工具",
+      "cover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c",
+      "links": [
+        {
+          "name": "官方文档",
+          "url": "https://example.com/docs"
+        },
+        {
+          "name": "开源仓库",
+          "url": "https://github.com/example/framework"
+        }
+      ],
+      "relatedIds": [
+        "evt_1730000000000_seed02"
+      ],
+      "records": [
+        {
+          "id": "rec_1700000000000_rec001",
+          "date": "2025-06-01",
+          "rating": 4,
+          "summary": "初步完成核心功能的技术调研与选型评估",
+          "detail": "深入阅读了核心模块设计，接口解耦很彻底，组件间职责划分明确，整体符合预期。",
+          "createdAt": "2025-06-01T10:00:00+08:00",
+          "updatedAt": "2025-06-01T10:00:00+08:00"
+        },
+        {
+          "id": "rec_1700000000000_rec002",
+          "date": "2025-08-15",
+          "rating": 5,
+          "summary": "试点项目顺利完成灰度发布并进入稳定运行阶段",
+          "createdAt": "2025-08-15T15:30:00+08:00",
+          "updatedAt": "2025-08-15T15:30:00+08:00"
+        }
+      ],
+      "createdAt": "2025-05-20T08:00:00+08:00",
+      "updatedAt": "2025-08-15T15:30:00+08:00"
+    },
+    {
+      "id": "evt_1730000000000_seed02",
+      "date": "2026-03-10",
+      "title": "示例事件 B：全量版本发布",
+      "category": "软件工具",
+      "links": [],
+      "relatedIds": [],
+      "records": [
+        {
+          "id": "rec_1730000000000_rec003",
+          "date": "2026-03-12",
+          "rating": 5,
+          "summary": "生产环境正式升级至全量稳定版",
+          "createdAt": "2026-03-12T09:00:00+08:00",
+          "updatedAt": "2026-03-12T09:00:00+08:00"
+        }
+      ],
+      "createdAt": "2026-03-10T09:00:00+08:00",
+      "updatedAt": "2026-03-12T09:00:00+08:00"
+    }
+  ]
+}

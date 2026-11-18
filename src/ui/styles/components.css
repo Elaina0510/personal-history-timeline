@@ -541,3 +541,32 @@ body.is-locked,
     scroll-behavior: auto !important;
   }
 }
+
+/* ===== 全局工具栏（补设计缺口：新建事件 / 导入 / 导出入口） ===== */
+#toolbar {
+  padding: var(--htl-space-2, 8px) var(--htl-space-4, 16px) 0;
+}
+
+.htl-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--htl-space-2, 8px);
+  align-items: center;
+}
+
+.htl-toolbar__btn {
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--htl-fs-sm, 14px);
+  padding: var(--htl-space-2, 8px) var(--htl-space-3, 12px);
+  border-radius: var(--htl-radius-sm, 6px);
+  border: 1px solid var(--htl-color-border, #e2e8f0);
+  background-color: var(--htl-color-surface, #ffffff);
+  color: var(--htl-color-text, #1e293b);
+  transition: var(--htl-transition-fast, 120ms ease);
+}
+
+.htl-toolbar__btn:hover {
+  border-color: var(--htl-color-accent, #4c9aff);
+  color: var(--htl-color-accent, #4c9aff);
+}
