@@ -74,10 +74,11 @@ function buildAxisPath(root: HTMLElement): string {
     const card = node.closest('.htl-card') as HTMLElement | null;
     const cr = card ? card.getBoundingClientRect() : null;
     return {
-      x: Math.round(r.left - rootRect.left + r.width / 2),
-      y: Math.round(r.top - rootRect.top + r.height / 2),
-      cardLeft: cr ? cr.left - rootRect.left : null,
-      cardRight: cr ? cr.right - rootRect.left : null,
+      // 加上滚动偏移：SVG 的原点固定在内容起点，横向滚动时节点屏幕坐标会变
+      x: Math.round(r.left - rootRect.left + root.scrollLeft + r.width / 2),
+      y: Math.round(r.top - rootRect.top + root.scrollTop + r.height / 2),
+      cardLeft: cr ? cr.left - rootRect.left + root.scrollLeft : null,
+      cardRight: cr ? cr.right - rootRect.left + root.scrollLeft : null,
     };
   });
 
@@ -116,10 +117,11 @@ export function drawAxis(root: HTMLElement): void {
     const card = node.closest('.htl-card') as HTMLElement | null;
     const cr = card ? card.getBoundingClientRect() : null;
     return {
-      x: Math.round(r.left - rootRect.left + r.width / 2),
-      y: Math.round(r.top - rootRect.top + r.height / 2),
-      cardLeft: cr ? cr.left - rootRect.left : null,
-      cardRight: cr ? cr.right - rootRect.left : null,
+      // 加上滚动偏移：SVG 的原点固定在内容起点，横向滚动时节点屏幕坐标会变
+      x: Math.round(r.left - rootRect.left + root.scrollLeft + r.width / 2),
+      y: Math.round(r.top - rootRect.top + root.scrollTop + r.height / 2),
+      cardLeft: cr ? cr.left - rootRect.left + root.scrollLeft : null,
+      cardRight: cr ? cr.right - rootRect.left + root.scrollLeft : null,
     };
   });
 
