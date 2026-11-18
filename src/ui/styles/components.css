@@ -983,7 +983,8 @@ body.is-locked,
   overflow: visible; /* 节点与引线要露到卡片外面 */
   margin: 0;
   padding: 0;
-  background: none;
+  /* 与页面同色的实心背景：视觉上仍然“无框”，但折线不会从文字中间穿过 */
+  background: var(--htl-color-bg, #f8f9fa);
   border: none;
   border-radius: 0;
   box-shadow: none;

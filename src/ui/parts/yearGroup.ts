@@ -57,7 +57,7 @@ export function renderYearGroup(
       const sig = hashString(`${cardView.event.id}|${cardView.event.date}|${cardView.event.title}`);
       const isUp = sig % 2 === 0;
       const lift = 70 + (sig % 6) * 22; // 70..180px 离轴距离（落差拉大）
-      const gap = 14 + ((sig >> 3) % 6) * 14; // 14..84px 左右间距
+      const gap = 44 + ((sig >> 3) % 6) * 12; // 44..104px 左右间距（给折线留穿行空间）
       const slot = el('div', {
         class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
         style: `--lift: ${lift}px; --gap: ${gap}px;`,
