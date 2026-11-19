@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { enforceInvariants, planMerge } from '../src/core/merge';
 import {
-  PRESET_CATEGORIES,
   type PersonalRecord,
   type TimelineData,
   type TimelineEvent,
@@ -24,7 +23,6 @@ function makeEvent(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
     id: 'evt_1770000000000_000001',
     date: '2026-01-01',
     title: '测试事件',
-    category: '其他',
     links: [],
     relatedIds: [],
     records: [],
@@ -34,18 +32,17 @@ function makeEvent(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
   };
 }
 
-function makeData(events: TimelineEvent[] = [], categories: string[] = [...PRESET_CATEGORIES]): TimelineData {
+function makeData(events: TimelineEvent[] = []): TimelineData {
   return {
     schemaVersion: 1,
     appVersion: '0.0.1',
     savedAt: '2026-01-01T12:00:00+08:00',
-    categories,
     ui: { sortOrder: 'desc' },
     events,
   };
 }
 
-describe('MOD-005 merge: M1~M10 规范测试', () => {
+describe('MOD-005 merge: M1~M10, M-A1, M-A2 规范测试', () => {
   it('M1: 本地 A(updated 10:00)，导入 A(updated 09:00) -> planMerge("merge") -> updated:0, skipped:1，本地 A 未变', () => {
     const localA = makeEvent({
       id: 'evt_1770000000000_00000a',
@@ -137,13 +134,13 @@ describe('MOD-005 merge: M1~M10 规范测试', () => {
     expect(preview.counts.added).toBe(0);
   });
 
-  it('M4: 同上，mode="overwrite" -> B 消失，categories 取并集', () => {
+  it('M4: 同上，mode="overwrite" -> B 消失', () => {
     const localA = makeEvent({ id: 'evt_1770000000000_00000a', title: '事件 A' });
     const localB = makeEvent({ id: 'evt_1770000000000_00000b', title: '独有事件 B' });
     const incomingA = makeEvent({ id: 'evt_1770000000000_00000a', title: '事件 A (全量导入)' });
 
-    const local = makeData([localA, localB], [...PRESET_CATEGORIES, '本地私有分类']);
-    const incoming = makeData([incomingA], [...PRESET_CATEGORIES, '导入新增分类']);
+    const local = makeData([localA, localB]);
+    const incoming = makeData([incomingA]);
 
     const { next, preview } = planMerge(local, incoming, 'overwrite');
 
@@ -151,10 +148,6 @@ describe('MOD-005 merge: M1~M10 规范测试', () => {
     expect(next.events).toHaveLength(1);
     expect(next.events[0]!.id).toBe('evt_1770000000000_00000a');
     expect(next.events.some((e) => e.id === 'evt_1770000000000_00000b')).toBe(false);
-
-    // categories 取并集：保留本地自定义分类与导入分类
-    expect(next.categories).toContain('本地私有分类');
-    expect(next.categories).toContain('导入新增分类');
 
     expect(preview.counts.updated).toBe(1);
     expect(preview.counts.added).toBe(0);
@@ -414,6 +407,82 @@ describe('MOD-005 merge: M1~M10 规范测试', () => {
     const resultA = freshPlan.next.events.find((e) => e.id === 'evt_1770000000000_00000a');
     expect(resultA?.title).toBe('本地新编辑事件 A');
     expect(resultA?.updatedAt).toBe('2026-01-01T11:00:00+08:00');
+  });
+
+  it('M-A1: 导入文件为 V0.0.1 格式：根带 categories、2 条事件各带 category，date/title 合法', () => {
+    const local = makeData([]);
+    const incoming = {
+      schemaVersion: 1,
+      appVersion: '0.0.1',
+      savedAt: '2026-01-01T12:00:00+08:00',
+      categories: ['生活', '工作'],
+      ui: { sortOrder: 'desc' },
+      events: [
+        {
+          id: 'evt_1770000000000_000001',
+          date: '2026-01-01',
+          title: '旧格式事件1',
+          category: '生活',
+          links: [],
+          relatedIds: [],
+          records: [],
+          createdAt: '2026-01-01T00:00:00+08:00',
+          updatedAt: '2026-01-01T00:00:00+08:00',
+        },
+        {
+          id: 'evt_1770000000000_000002',
+          date: '2026-01-02',
+          title: '旧格式事件2',
+          category: '工作',
+          links: [],
+          relatedIds: [],
+          records: [],
+          createdAt: '2026-01-02T00:00:00+08:00',
+          updatedAt: '2026-01-02T00:00:00+08:00',
+        },
+      ],
+    } as any;
+
+    const { next, preview } = planMerge(local, incoming, 'merge');
+
+    expect(preview.counts.errors).toBe(0);
+    expect(preview.counts.added).toBe(2);
+    expect(preview.items.every((it) => !it.message || !it.message.includes('分类'))).toBe(true);
+    expect(next.events).toHaveLength(2);
+    expect(next.events.every((e) => Object.hasOwn(e, 'category') === false)).toBe(true);
+  });
+
+  it('M-A2: 本地 1 条事件、导入同 id 的旧格式事件（带 category）-> updated:1，无 category 键', () => {
+    const localA = makeEvent({
+      id: 'evt_1770000000000_000001',
+      date: '2026-01-01',
+      title: '本地事件',
+      updatedAt: '2026-01-01T00:00:00+08:00',
+    });
+    const incomingA = {
+      id: 'evt_1770000000000_000001',
+      date: '2026-01-01',
+      title: '导入新事件（带 category）',
+      category: '生活',
+      updatedAt: '2026-01-01T10:00:00+08:00',
+    };
+
+    const local = makeData([localA]);
+    const incoming = {
+      schemaVersion: 1,
+      appVersion: '0.0.1',
+      savedAt: '2026-01-01T12:00:00+08:00',
+      categories: ['生活'],
+      ui: { sortOrder: 'desc' },
+      events: [incomingA],
+    } as any;
+
+    const { next, preview } = planMerge(local, incoming, 'merge');
+
+    expect(preview.counts.updated).toBe(1);
+    expect(next.events).toHaveLength(1);
+    expect(next.events[0]!.title).toBe('导入新事件（带 category）');
+    expect(Object.hasOwn(next.events[0]!, 'category')).toBe(false);
   });
 
   describe('边界条件与硬性规则验证', () => {

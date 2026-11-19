@@ -8,10 +8,9 @@ import {
   validateTopShape,
   validateUrlScheme,
 } from '../src/core/validate';
-import { PRESET_CATEGORIES } from '../src/core/types';
 import { ID_PATTERN } from '../src/core/id';
 
-describe('MOD-004 validate: §8.2 V1~V20, V3b, V3c', () => {
+describe('MOD-004 validate: §8.2 V1, V3~V16, V18~V20, V3b, V3c, V-A1, V-A2', () => {
   // ==========================================
   // 表单入口校验
   // ==========================================
@@ -20,29 +19,26 @@ describe('MOD-004 validate: §8.2 V1~V20, V3b, V3c', () => {
     const issues = validateEventInput({
       date: '2026-11-18',
       title: '',
-      category: 'AI模型',
     });
     const issue = issues.find((i) => i.field === 'title' && i.code === 'MISSING_REQUIRED');
     expect(issue).toBeDefined();
     expect(issue?.severity).toBe('error');
   });
 
-  it('V2: validateEventInput - category 为空报 MISSING_REQUIRED', () => {
+  it('V-A1: validateEventInput - 事件对象带 category: "" 且 date/title 合法返回空数组', () => {
     const issues = validateEventInput({
-      date: '2026-11-18',
-      title: '有效标题',
+      date: '2026-11-19',
+      title: '合法标题',
       category: '',
-    });
-    const issue = issues.find((i) => i.field === 'category' && i.code === 'MISSING_REQUIRED');
-    expect(issue).toBeDefined();
-    expect(issue?.severity).toBe('error');
+    } as any);
+    expect(issues).toHaveLength(0);
+    expect(issues.some((i) => i.field === 'category')).toBe(false);
   });
 
   it('V3: validateEventInput - title 长度 61 恰含 1 条 FIELD_TOO_LONG (error)', () => {
     const issues = validateEventInput({
       date: '2026-11-18',
       title: 'a'.repeat(61),
-      category: 'AI模型',
     });
     expect(issues).toHaveLength(1);
     expect(issues[0]?.code).toBe('FIELD_TOO_LONG');
@@ -138,29 +134,43 @@ describe('MOD-004 validate: §8.2 V1~V20, V3b, V3c', () => {
   // 顶层形态校验
   // ==========================================
 
-  it('V11: validateTopShape - 裸数组 [{...}, {...}] 返回 ok，categories 补预设，ui.sortOrder 为 desc', () => {
+  it('V11: validateTopShape - 裸数组 [{...}, {...}] 返回 ok，ui.sortOrder 为 desc', () => {
     const dummyEvents = [
-      { date: '2026-11-18', title: 'A', category: 'AI模型' },
-      { date: '2026-11-17', title: 'B', category: '游戏发售' },
+      { date: '2026-11-18', title: 'A' },
+      { date: '2026-11-17', title: 'B' },
     ];
     const res = validateTopShape(dummyEvents);
     expect(res.ok).toBe(true);
     expect(res.data).not.toBeNull();
-    expect(res.data?.categories).toEqual(PRESET_CATEGORIES);
     expect(res.data?.ui.sortOrder).toBe('desc');
     expect(res.data?.events).toEqual(dummyEvents);
     expect(res.issues).toHaveLength(0);
   });
 
   it('V12: validateTopShape - { events: [...] } 返回 ok', () => {
-    const dummyEvents = [{ date: '2026-11-18', title: 'A', category: 'AI模型' }];
+    const dummyEvents = [{ date: '2026-11-18', title: 'A' }];
     const res = validateTopShape({ events: dummyEvents });
     expect(res.ok).toBe(true);
     expect(res.data).not.toBeNull();
-    expect(res.data?.categories).toEqual(PRESET_CATEGORIES);
     expect(res.data?.ui.sortOrder).toBe('desc');
     expect(res.data?.events).toEqual(dummyEvents);
     expect(res.issues).toHaveLength(0);
+  });
+
+  it('V-A2: validateTopShape - 根对象含 categories 剥离后 Object.hasOwn 为 false 且无 error', () => {
+    const obj = {
+      schemaVersion: 1,
+      appVersion: '0.0.1',
+      savedAt: '2026-11-19T12:00:00+08:00',
+      categories: ['A', 'B'],
+      ui: { sortOrder: 'desc' },
+      events: [],
+    };
+    const res = validateTopShape(obj);
+    expect(res.ok).toBe(true);
+    expect(res.data).not.toBeNull();
+    expect(Object.hasOwn(res.data!, 'categories')).toBe(false);
+    expect(res.issues.filter((i) => i.severity === 'error')).toHaveLength(0);
   });
 
   it('V13: validateTopShape - not json 与 {} 均含 TOP_LEVEL_SHAPE', () => {
@@ -227,20 +237,6 @@ describe('MOD-004 validate: §8.2 V1~V20, V3b, V3c', () => {
     expect(event?.title).toHaveLength(60);
     expect(event?.title).toBe(longTitle.slice(0, 60));
     const issue = issues.find((i) => i.code === 'FIELD_TRUNCATED' && i.field === 'title');
-    expect(issue).toBeDefined();
-    expect(issue?.severity).toBe('warning');
-  });
-
-  it('V17: coerceEvent - category: 新分类 不在字典保留分类，issues 含 UNKNOWN_CATEGORY_ADDED', () => {
-    const raw = {
-      date: '2026-11-18',
-      title: '测试新分类',
-      category: '新分类',
-    };
-    const { event, issues } = coerceEvent(raw, 0);
-    expect(event).not.toBeNull();
-    expect(event?.category).toBe('新分类');
-    const issue = issues.find((i) => i.code === 'UNKNOWN_CATEGORY_ADDED' && i.field === 'category');
     expect(issue).toBeDefined();
     expect(issue?.severity).toBe('warning');
   });
@@ -343,36 +339,32 @@ describe('MOD-004 validate: §8.2 V1~V20, V3b, V3c', () => {
   });
 
   it('额外：coerceEvent - 必填缺失返回 null 与 error issue', () => {
-    const { event: e1, issues: i1 } = coerceEvent({ title: 'T', category: 'AI模型' }, 0);
+    const { event: e1, issues: i1 } = coerceEvent({ title: 'T' }, 0);
     expect(e1).toBeNull();
     expect(i1.some((i) => i.code === 'MISSING_REQUIRED' && i.field === 'date')).toBe(true);
 
-    const { event: e2, issues: i2 } = coerceEvent({ date: '2026-11-18', category: 'AI模型' }, 0);
+    const { event: e2, issues: i2 } = coerceEvent({ date: '2026-11-18' }, 0);
     expect(e2).toBeNull();
     expect(i2.some((i) => i.code === 'MISSING_REQUIRED' && i.field === 'title')).toBe(true);
 
-    const { event: e3, issues: i3 } = coerceEvent({ date: '2026-11-18', title: 'T' }, 0);
-    expect(e3).toBeNull();
-    expect(i3.some((i) => i.code === 'MISSING_REQUIRED' && i.field === 'category')).toBe(true);
-
-    const { event: e4, issues: i4 } = coerceEvent({ date: '2026-02-30', title: 'T', category: 'AI模型' }, 0);
+    const { event: e4, issues: i4 } = coerceEvent({ date: '2026-02-30', title: 'T' }, 0);
     expect(e4).toBeNull();
     expect(i4.some((i) => i.code === 'INVALID_DATE' && i.field === 'date')).toBe(true);
   });
 
-  it('额外：validateTopShape - 完整根对象保留 ui 与 自定义分类', () => {
+  it('额外：validateTopShape - 保留 ui、忽略 categories', () => {
     const full = {
       schemaVersion: 1,
       appVersion: '0.0.1',
       savedAt: '2026-11-18T21:30:00+08:00',
       categories: ['生活事件', '自建项目'],
       ui: { sortOrder: 'asc' },
-      events: [{ date: '2026-11-18', title: 'A', category: '生活事件' }],
+      events: [{ date: '2026-11-18', title: 'A' }],
     };
     const res = validateTopShape(full);
     expect(res.ok).toBe(true);
     expect(res.data?.ui.sortOrder).toBe('asc');
-    expect(res.data?.categories).toEqual(['生活事件', '自建项目']);
+    expect(Object.hasOwn(res.data!, 'categories')).toBe(false);
     expect(res.data?.savedAt).toBe('2026-11-18T21:30:00+08:00');
   });
 

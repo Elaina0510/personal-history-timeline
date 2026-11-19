@@ -9,7 +9,6 @@
  */
 
 import {
-  CATEGORY_MAX,
   DEFAULT_RATING,
   DETAIL_MAX,
   EventInput,
@@ -23,7 +22,6 @@ import {
   MAX_RECORDS_PER_EVENT,
   MAX_RELATIONS_PER_EVENT,
   PersonalRecord,
-  PRESET_CATEGORIES,
   Rating,
   RecordInput,
   SUMMARY_MAX,
@@ -96,13 +94,6 @@ export function validateEventInput(i: EventInput): Issue[] {
     issues.push(makeIssue('MISSING_REQUIRED', 'error', { field: 'title' }));
   } else if (i.title.length > TITLE_MAX) {
     issues.push(makeIssue('FIELD_TOO_LONG', 'error', { field: 'title' }));
-  }
-
-  // 3. category
-  if (typeof i.category !== 'string' || i.category.trim() === '') {
-    issues.push(makeIssue('MISSING_REQUIRED', 'error', { field: 'category' }));
-  } else if (i.category.length > CATEGORY_MAX) {
-    issues.push(makeIssue('FIELD_TOO_LONG', 'error', { field: 'category' }));
   }
 
   return issues;
@@ -348,28 +339,7 @@ export function coerceEvent(
     title = e.title;
   }
 
-  // 4. category
-  let category = '';
-  if (typeof e.category !== 'string' || e.category.trim() === '') {
-    hasError = true;
-    issues.push(makeIssue('MISSING_REQUIRED', 'error', { field: 'category', eventId: id, index }));
-  } else {
-    const trimmed = e.category.trim();
-    if (trimmed.length > CATEGORY_MAX) {
-      category = trimmed.slice(0, CATEGORY_MAX);
-      issues.push(makeIssue('FIELD_TRUNCATED', 'warning', { field: 'category', eventId: id, index }));
-    } else {
-      category = trimmed;
-    }
-
-    if (!PRESET_CATEGORIES.includes(category as any)) {
-      issues.push(
-        makeIssue('UNKNOWN_CATEGORY_ADDED', 'warning', { field: 'category', eventId: id, index })
-      );
-    }
-  }
-
-  // 5. cover
+  // 4. cover
   let cover: string | undefined = undefined;
   if (typeof e.cover === 'string' && e.cover.length > 0) {
     const coverIssues = validateCover(e.cover);
@@ -485,7 +455,6 @@ export function coerceEvent(
     id,
     date,
     title,
-    category,
     ...(cover !== undefined ? { cover } : {}),
     links,
     relatedIds,
@@ -503,7 +472,7 @@ export function coerceEvent(
  * 1. 完整根对象
  * 2. { events: [...] }
  * 3. 裸数组 [...]
- * 后两者补 categories=PRESET_CATEGORIES、ui.sortOrder='desc'、savedAt 用当前时间字符串。
+ * 后两者补 ui.sortOrder='desc'、savedAt 用当前时间字符串。
  */
 export function validateTopShape(
   json: unknown
@@ -524,7 +493,6 @@ export function validateTopShape(
         schemaVersion: 1,
         appVersion: '0.0.1',
         savedAt: formatLocalIso(new Date()),
-        categories: [...PRESET_CATEGORIES],
         ui: { sortOrder: 'desc' },
         events: json as any,
       },
@@ -544,15 +512,6 @@ export function validateTopShape(
   }
 
   // 形态 1 & 2
-  const rawCategories = Array.isArray(obj.categories)
-    ? obj.categories.filter((c: unknown): c is string => typeof c === 'string' && c.trim().length > 0)
-    : [];
-
-  const categories =
-    rawCategories.length > 0
-      ? Array.from(new Set(rawCategories))
-      : [...PRESET_CATEGORIES];
-
   const sortOrder = obj.ui?.sortOrder === 'asc' ? 'asc' : 'desc';
 
   const savedAt =
@@ -571,7 +530,6 @@ export function validateTopShape(
       schemaVersion: 1,
       appVersion,
       savedAt,
-      categories,
       ui: { sortOrder },
       events: obj.events,
     },

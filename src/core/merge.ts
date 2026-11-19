@@ -9,7 +9,6 @@
 
 import {
   CAPACITY_BLOCK_BYTES,
-  CATEGORY_MAX,
   ImportMode,
   ImportPreview,
   ImportPreviewItem,
@@ -18,7 +17,6 @@ import {
   MAX_RECORDS_PER_EVENT,
   MAX_RELATIONS_PER_EVENT,
   PersonalRecord,
-  PRESET_CATEGORIES,
   TimelineData,
   TimelineEvent,
   TITLE_MAX,
@@ -67,36 +65,6 @@ function compareEventsAsc(a: TimelineEvent, b: TimelineEvent): number {
     return aId < bId ? -1 : 1;
   }
   return 0;
-}
-
-/**
- * 分类合并：预设在前、自定义按加入顺序追加并去重
- */
-function mergeCategories(localCats: string[] = [], incomingCats: string[] = []): string[] {
-  const result: string[] = [];
-  const seen = new Set<string>();
-
-  for (const c of localCats) {
-    if (typeof c === 'string' && c.trim()) {
-      const trimmed = c.trim();
-      if (!seen.has(trimmed)) {
-        seen.add(trimmed);
-        result.push(trimmed);
-      }
-    }
-  }
-
-  for (const c of incomingCats) {
-    if (typeof c === 'string' && c.trim()) {
-      const trimmed = c.trim();
-      if (!seen.has(trimmed)) {
-        seen.add(trimmed);
-        result.push(trimmed);
-      }
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -237,7 +205,7 @@ export function enforceInvariants(data: TimelineData): {
 /**
  * 导入合并规划：
  * - merge 模式：同 id 比 updatedAt，incoming 更新则整条替换，否则 skipped；本地独有保留
- * - overwrite 模式：events 整体替换，但 categories 取并集
+ * - overwrite 模式：events 整体替换
  * - 缺失 updatedAt 视为最旧
  * - 不修改 local 与 incoming 原对象
  * - items 最多 200 条，超出置 truncated = true
@@ -257,7 +225,6 @@ export function planMerge(
         schemaVersion: 1,
         appVersion: '0.0.1',
         savedAt: new Date().toISOString(),
-        categories: [...PRESET_CATEGORIES],
         ui: { sortOrder: 'desc' },
         events: [],
       };
@@ -268,16 +235,12 @@ export function planMerge(
         schemaVersion: 1,
         appVersion: '0.0.1',
         savedAt: new Date().toISOString(),
-        categories: [...PRESET_CATEGORIES],
         ui: { sortOrder: 'desc' },
         events: [],
       };
 
   if (!Array.isArray(clonedLocal.events)) {
     clonedLocal.events = [];
-  }
-  if (!Array.isArray(clonedLocal.categories)) {
-    clonedLocal.categories = [...PRESET_CATEGORIES];
   }
 
   const allItems: ImportPreviewItem[] = [];
@@ -324,7 +287,7 @@ export function planMerge(
 
     const item = raw as Partial<TimelineEvent>;
 
-    // 必填字段缺失校验（缺 title、缺 date、缺 category）
+    // 必填字段缺失校验（缺 title、缺 date）
     if (typeof item.title !== 'string' || item.title.trim() === '') {
       counts.errors++;
       allItems.push({
@@ -367,20 +330,6 @@ export function planMerge(
       continue;
     }
 
-    if (typeof item.category !== 'string' || item.category.trim() === '') {
-      counts.errors++;
-      allItems.push({
-        index: i,
-        eventId: typeof item.id === 'string' ? item.id : null,
-        date: item.date,
-        title: item.title,
-        action: 'error',
-        code: 'MISSING_REQUIRED',
-        message: ISSUE_MESSAGES.MISSING_REQUIRED,
-      });
-      continue;
-    }
-
     // 宽容处理超长字段（截断并记录 warning）
     let title = item.title;
     if (title.length > TITLE_MAX) {
@@ -390,33 +339,6 @@ export function planMerge(
         severity: 'warning',
         message: ISSUE_MESSAGES.FIELD_TRUNCATED,
         field: 'title',
-        eventId: typeof item.id === 'string' ? item.id : undefined,
-        index: i,
-      });
-    }
-
-    let category = item.category.trim();
-    if (category.length > CATEGORY_MAX) {
-      category = category.slice(0, CATEGORY_MAX);
-      warnings.push({
-        code: 'FIELD_TRUNCATED',
-        severity: 'warning',
-        message: ISSUE_MESSAGES.FIELD_TRUNCATED,
-        field: 'category',
-        eventId: typeof item.id === 'string' ? item.id : undefined,
-        index: i,
-      });
-    }
-
-    if (
-      !PRESET_CATEGORIES.includes(category as any) &&
-      !clonedLocal.categories.includes(category)
-    ) {
-      warnings.push({
-        code: 'UNKNOWN_CATEGORY_ADDED',
-        severity: 'warning',
-        message: ISSUE_MESSAGES.UNKNOWN_CATEGORY_ADDED,
-        field: 'category',
         eventId: typeof item.id === 'string' ? item.id : undefined,
         index: i,
       });
@@ -457,7 +379,6 @@ export function planMerge(
       id,
       date,
       title,
-      category,
       ...(item.cover ? { cover: item.cover } : {}),
       links: Array.isArray(item.links) ? item.links : [],
       relatedIds: Array.isArray(item.relatedIds) ? item.relatedIds : [],
@@ -541,21 +462,10 @@ export function planMerge(
     }
   }
 
-  // 分类合并（保留本地自定义分类）
-  const mergedCategories = mergeCategories(clonedLocal.categories, clonedIncoming.categories);
-  const catSet = new Set(mergedCategories);
-  for (const e of nextEvents) {
-    if (e.category && !catSet.has(e.category)) {
-      catSet.add(e.category);
-      mergedCategories.push(e.category);
-    }
-  }
-
   const next: TimelineData = {
     schemaVersion: 1,
     appVersion: clonedLocal.appVersion || '0.0.1',
     savedAt: clonedLocal.savedAt || new Date().toISOString(),
-    categories: mergedCategories,
     ui: {
       sortOrder: clonedLocal.ui?.sortOrder === 'asc' ? 'asc' : 'desc',
     },
