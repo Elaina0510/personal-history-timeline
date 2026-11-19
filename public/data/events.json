@@ -1,17 +1,7 @@
 {
   "schemaVersion": 1,
-  "appVersion": "0.0.1",
+  "appVersion": "0.0.2",
   "savedAt": "2026-11-18T12:00:00+08:00",
-  "categories": [
-    "游戏发售",
-    "AI模型",
-    "硬件发布",
-    "软件工具",
-    "学术论文",
-    "影音作品",
-    "生活事件",
-    "其他"
-  ],
   "ui": {
     "sortOrder": "desc"
   },
@@ -20,7 +10,6 @@
       "id": "evt_1700000000000_seed01",
       "date": "2025-05-20",
       "title": "示例事件 A：跨平台框架发布",
-      "category": "软件工具",
       "cover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c",
       "links": [
         {
@@ -61,7 +50,6 @@
       "id": "evt_1730000000000_seed02",
       "date": "2026-03-10",
       "title": "示例事件 B：全量版本发布",
-      "category": "软件工具",
       "links": [],
       "relatedIds": [],
       "records": [
@@ -81,7 +69,6 @@
       "id": "evt_1700000000000_seed03",
       "date": "2026-08-02",
       "title": "示例事件 C：新一代模型开放",
-      "category": "AI模型",
       "links": [
         {
           "name": "发布说明",
@@ -115,7 +102,6 @@
       "id": "evt_1700000000000_seed04",
       "date": "2026-05-18",
       "title": "示例事件 D：显卡发布",
-      "category": "硬件发布",
       "links": [],
       "relatedIds": [],
       "records": [
@@ -135,7 +121,6 @@
       "id": "evt_1700000000000_seed05",
       "date": "2025-12-24",
       "title": "示例事件 E：年度期待作发售",
-      "category": "游戏发售",
       "links": [
         {
           "name": "商店页",
@@ -169,7 +154,6 @@
       "id": "evt_1700000000000_seed06",
       "date": "2025-09-09",
       "title": "示例事件 F：投稿论文被接收",
-      "category": "学术论文",
       "links": [],
       "relatedIds": [],
       "records": [
@@ -189,7 +173,6 @@
       "id": "evt_1700000000000_seed07",
       "date": "2025-02-14",
       "title": "示例事件 G：补完一部老片",
-      "category": "影音作品",
       "links": [],
       "relatedIds": [],
       "records": [
@@ -210,7 +193,6 @@
       "id": "evt_1700000000000_seed08",
       "date": "2024-10-01",
       "title": "示例事件 H：搬到新住处",
-      "category": "生活事件",
       "links": [],
       "relatedIds": [],
       "records": [
@@ -230,7 +212,6 @@
       "id": "evt_1700000000000_seed09",
       "date": "2024-06-15",
       "title": "示例事件 I：一个人去看了场演出",
-      "category": "生活事件",
       "links": [],
       "relatedIds": [],
       "records": [],
@@ -241,7 +222,6 @@
       "id": "evt_1700000000000_seed10",
       "date": "2023-11-11",
       "title": "示例事件 J：换了把新键盘",
-      "category": "其他",
       "links": [],
       "relatedIds": [],
       "records": [

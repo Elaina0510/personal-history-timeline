@@ -7,6 +7,7 @@ import { el } from './ui/dom';
 import { buildRelationIndex } from './core/select';
 import { toast } from './ui/parts/toast'; import { confirmDialog } from './ui/parts/confirm';
 import { openLightbox, closeLightbox } from './ui/parts/lightbox';
+import { openDetail, closeDetail, refreshDetail } from './ui/parts/detailModal';
 import { scrollToYear, scrollToTop } from './ui/parts/yearNav';
 import { openEventForm, openRecordForm, closeFormModal, setStore as setFormStore } from './ui/parts/formModal';
 import { handleFilterAction, setStore as setFilterStore } from './ui/parts/filterBar';
@@ -22,7 +23,7 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
     case 'delete-event': {
       const e = events.find((item) => item.id === id);
       if (id && e && await confirmDialog({ title: '删除事件', message: `确定删除「${e.title}」？将同时解除 ${buildRelationIndex(events).get(id)?.length ?? 0} 处关联`, danger: true })) {
-        if (store.deleteEvent(id).ok) toast('已删除');
+        if (store.deleteEvent(id).ok) { closeDetail(); toast('已删除'); }
       }
       break;
     }
@@ -39,12 +40,14 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
       }
       break;
     }
-    case 'toggle-card': if (id) store.toggleExpanded(id); break;
+    case 'open-detail': if (id) openDetail(id, store); break;
+    case 'close-detail': closeDetail(); break;
     case 'open-lightbox': if (id) openLightbox(id); break;
     case 'jump-relation': {
+      closeDetail();
       let t = id ? document.querySelector<HTMLElement>(`#timeline-root [data-id="${id}"]`) : null;
       if (!t && id) { store.clearFilters(); t = document.querySelector<HTMLElement>(`#timeline-root [data-id="${id}"]`); toast('已清除筛选以显示目标事件'); }
-      if (t && id) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); store.flash(id); }
+      if (t && id) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); store.flash(id); }
       break;
     }
     case 'jump-year': if (id) scrollToYear(id); break;
@@ -56,7 +59,7 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
   }
 }
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeLightbox(); closeFormModal(); }
+  if (e.key === 'Escape') { closeLightbox(); closeFormModal(); closeDetail(); }
   else if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
     e.preventDefault();
     document.querySelector<HTMLElement>('[data-focus-key="filter.keyword"]')?.focus();
@@ -64,12 +67,15 @@ document.addEventListener('keydown', (e) => {
 });
 async function init(): Promise<void> {
   const storage = createStorage(), clock = createClock();
-  store = new Store({ storage, clock, appVersion: '0.0.1' });
+  store = new Store({ storage, clock, appVersion: '0.0.2' });
   setFormStore(store); setFilterStore(store); setImportStore(store);
   (window as unknown as { __htl_store?: Store }).__htl_store = store;
   const seedRaw = await loadSeedRaw();
   const res = store.init(seedRaw);
-  store.subscribe((s) => render(s));
+  store.subscribe((s) => {
+    render(s);
+    refreshDetail(s);
+  });
   render(store.getState());
   renderToolbar();
   mountCapacityBar(store);
