@@ -1,22 +1,23 @@
 /**
- * MOD-010: 事件条目行渲染 (entry.ts)
- * 渲染单条事件在竖向主轴上的整行布局。
- * 行结构由「条目格 (.htl-cell--entry)」与「轴格 (.htl-cell--axis)」构成，左右侧由 side 决定。
+ * MOD-010: 事件条目行渲染 (entry.ts) — v0.0.3 行式档案布局
+ *
+ * 一行 = 日期 / 竖轴 / 标题 + 元信息 / 序号，四列对齐同一套细线网格。
  * 严禁使用 innerHTML、严禁自行做业务计算、严禁在此处绑定事件。
  */
 
 import { el } from '../dom';
 import type { CardView } from '../../core/select';
 
-export function renderEntry(
-  view: CardView,
-  seq: number,
-  side: 'left' | 'right'
-): HTMLElement {
-  const event = view.event;
-  const sideClass = side === 'right' ? 'is-right' : 'is-left';
+function pad(value: number, width: number): string {
+  return String(value).padStart(width, '0');
+}
 
-  const dateEl = el('span', { class: 'htl-entry__date' }, [event.date]);
+export function renderEntry(view: CardView, seq: number): HTMLElement {
+  const event = view.event;
+  const rating = view.latestRecord?.rating ?? 0;
+
+  const dateEl = el('span', { class: 'htl-row__date' }, [event.date]);
+
   const titleBtn = el(
     'button',
     {
@@ -29,22 +30,28 @@ export function renderEntry(
     [event.title]
   );
 
-  const entryEl = el('article', { class: 'htl-entry' }, [dateEl, titleBtn]);
-  const entryCell = el('div', { class: 'htl-cell--entry' }, [entryEl]);
+  const ratingEl = el(
+    'span',
+    { class: 'htl-entry__rating', title: rating > 0 ? `${rating} 星` : '暂无记录' },
+    [rating > 0 ? '★'.repeat(rating) : '—']
+  );
+  const recsEl = el('span', { class: 'htl-entry__recs' }, [`${pad(view.recordCount, 2)} REC`]);
+  const metaEl = el('p', { class: 'htl-entry__meta' }, [ratingEl, recsEl]);
+
+  const entryEl = el('div', { class: 'htl-entry' }, [titleBtn, metaEl]);
 
   const nodeEl = el('span', { class: 'htl-node', 'aria-hidden': 'true' });
-  const linkEl = el('span', { class: 'htl-link', 'aria-hidden': 'true' });
-  const axisCell = el('div', { class: 'htl-cell--axis' }, [nodeEl, linkEl]);
+  const railEl = el('span', { class: 'htl-row__rail', 'aria-hidden': 'true' }, [nodeEl]);
 
-  const rowEl = el(
+  const indexEl = el('span', { class: 'htl-row__index' }, [pad(seq + 1, 3)]);
+
+  return el(
     'div',
     {
-      class: `htl-row ${sideClass}`,
+      class: 'htl-row',
       'data-event-id': event.id,
       'data-seq': String(seq),
     },
-    [entryCell, axisCell]
+    [dateEl, railEl, entryEl, indexEl]
   );
-
-  return rowEl;
 }

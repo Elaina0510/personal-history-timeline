@@ -1,5 +1,5 @@
 /**
- * MOD-010: 年份分组与月份小节 (yearGroup.ts)
+ * MOD-010: 年份分组与月份小节 (yearGroup.ts) — v0.0.3 巨字年份条 + 月份刻度
  * 负责渲染每个年份的分组容器、吸顶年份标题、月份小节标识与事件行。
  * 严禁使用 innerHTML、严禁自行做业务计算、严禁在此处绑定事件。
  */
@@ -7,6 +7,10 @@
 import { el } from '../dom';
 import type { YearGroup } from '../../core/select';
 import { renderEntry } from './entry';
+
+function pad(value: number, width: number): string {
+  return String(value).padStart(width, '0');
+}
 
 export function renderYearGroup(
   group: YearGroup,
@@ -17,7 +21,15 @@ export function renderYearGroup(
     'data-year': group.year,
   });
 
-  const headingText = group.year ? `${group.year} 年` : '未知年份';
+  const months = Array.isArray(group.months) && group.months.length > 0 ? group.months : null;
+  const monthCount = months
+    ? months.filter((m) => m.cards && m.cards.length > 0).length
+    : 0;
+
+  const metaText = group.year
+    ? `${pad(group.cards.length, 2)} EVENTS / ${pad(monthCount, 2)} MONTHS`
+    : '';
+
   const headingEl = el(
     'h2',
     {
@@ -27,20 +39,20 @@ export function renderYearGroup(
       'data-focus-key': `year.${group.year}`,
       tabindex: '-1',
     },
-    [headingText]
+    [
+      el('span', { class: 'htl-year-heading__num' }, [group.year || '—']),
+      el('span', { class: 'htl-year-heading__unit' }, [group.year ? '年' : '未知年份']),
+      el('span', { class: 'htl-year-heading__meta' }, [metaText]),
+    ]
   );
   groupEl.appendChild(headingEl);
 
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
       const seq = seqOf.get(cardView.event.id) ?? 0;
-      const side = seq % 2 === 0 ? 'right' : 'left';
-      const row = renderEntry(cardView, seq, side);
-      host.appendChild(row);
+      host.appendChild(renderEntry(cardView, seq));
     }
   };
-
-  const months = Array.isArray(group.months) && group.months.length > 0 ? group.months : null;
 
   if (!months) {
     // 兼容：调用方只给了扁平 cards（无月份信息）
@@ -53,7 +65,6 @@ export function renderYearGroup(
     if (!monthGroup.cards || monthGroup.cards.length === 0) {
       continue;
     }
-    const monthLabel = monthGroup.month ? `${Number(monthGroup.month)} 月` : '未知月份';
     const monthEl = el('section', {
       class: 'htl-month-group',
       'data-month': monthGroup.month,
@@ -70,7 +81,16 @@ export function renderYearGroup(
           'data-focus-key': `month.${group.year}.${monthGroup.month}`,
           tabindex: '-1',
         },
-        [monthLabel]
+        [
+          el('span', { class: 'htl-month-heading__num' }, [monthGroup.month || '--']),
+          el('span', { class: 'htl-month-heading__unit' }, [
+            monthGroup.month ? '月' : '未知月份',
+          ]),
+          el('span', { class: 'htl-month-heading__rule', 'aria-hidden': 'true' }),
+          el('span', { class: 'htl-month-heading__count' }, [
+            `${pad(monthGroup.cards.length, 2)} EVENTS`,
+          ]),
+        ]
       )
     );
     renderCardsInto(monthEl, monthGroup.cards);

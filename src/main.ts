@@ -14,6 +14,33 @@ import { handleFilterAction, setStore as setFilterStore } from './ui/parts/filte
 import { openImportModal, openExportModal, openRestoreBackupConfirm, setStore as setImportStore } from './ui/parts/importExport';
 import { renderToolbar } from './ui/parts/toolbar';
 import { mountCapacityBar } from './ui/parts/capacityBar';
+import type { AppState } from './core/types';
+
+/** 首屏报头统计：只做纯展示聚合，不参与业务判定 */
+function updateHeroStats(s: AppState): void {
+  const events = s.data.events;
+  const eventsEl = document.getElementById('hs-events');
+  const spanEl = document.getElementById('hs-span');
+  const recordsEl = document.getElementById('hs-records');
+  if (!eventsEl || !spanEl || !recordsEl) return;
+  eventsEl.textContent = String(events.length).padStart(2, '0');
+  const years = events
+    .map((e) => e.date.slice(0, 4))
+    .filter((y) => /^\d{4}$/.test(y))
+    .sort();
+  const first = years[0];
+  const last = years[years.length - 1];
+  spanEl.textContent = first === undefined || last === undefined
+    ? '—'
+    : first === last
+      ? first
+      : `${first}—${last}`;
+  const records = events.reduce(
+    (sum, e) => sum + (Array.isArray(e.records) ? e.records.length : 0),
+    0
+  );
+  recordsEl.textContent = String(records).padStart(2, '0');
+}
 let store: Store;
 async function handler(action: string, id: string | undefined, ev: Event): Promise<void> {
   const events = store.getState().data.events;
@@ -67,7 +94,7 @@ document.addEventListener('keydown', (e) => {
 });
 async function init(): Promise<void> {
   const storage = createStorage(), clock = createClock();
-  store = new Store({ storage, clock, appVersion: '0.0.2' });
+  store = new Store({ storage, clock, appVersion: '0.0.3' });
   setFormStore(store); setFilterStore(store); setImportStore(store);
   (window as unknown as { __htl_store?: Store }).__htl_store = store;
   const seedRaw = await loadSeedRaw();
@@ -75,11 +102,22 @@ async function init(): Promise<void> {
   store.subscribe((s) => {
     render(s);
     refreshDetail(s);
+    updateHeroStats(s);
   });
   render(store.getState());
+  updateHeroStats(store.getState());
   renderToolbar();
   mountCapacityBar(store);
   bindActions(handler);
+
+  // 首屏红色区内隐藏右侧年份索引，滚过首屏后淡入（纯视觉，不涉及状态）
+  const heroEl = document.querySelector<HTMLElement>('.htl-hero');
+  const syncHeroState = (): void => {
+    const bottom = heroEl ? heroEl.getBoundingClientRect().bottom : 0;
+    document.body.classList.toggle('is-past-hero', bottom < 120);
+  };
+  window.addEventListener('scroll', syncHeroState, { passive: true });
+  syncHeroState();
   for (const issue of res.issues) {
     if (issue.code === 'STORAGE_UNAVAILABLE') {
       document.body.prepend(el('div', { class: 'htl-toast--warning', style: 'background:#fef3c7;color:#92400e;padding:8px;text-align:center;' }, [issue.message]));

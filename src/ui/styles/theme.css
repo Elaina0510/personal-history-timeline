@@ -1,30 +1,48 @@
 :root {
   /* ==========================================
+   * 0. 设计语言：双色 + 细线网格（参考 wodniack.dev）
+   *    墨黑底 / 纸白字 / 信号红；零圆角、零柔和阴影
+   * ========================================== */
+
+  /* ==========================================
    * 1. 颜色 (Colors)
    * ========================================== */
-  --htl-color-bg: #f8f9fa;
-  --htl-color-surface: #ffffff;
-  --htl-color-border: #e2e8f0;
-  --htl-color-text: #1e293b;
-  --htl-color-text-muted: #64748b;
-  --htl-color-accent: #4c9aff;
-  --htl-color-star: #f59e0b;
-  --htl-color-danger: #e5484d;
-  --htl-color-success: #10b981;
+  --htl-color-bg: #0b0b0c;
+  --htl-color-surface: #111113;
+  --htl-color-surface-2: #17171a;
+  --htl-color-paper: #f2efe6;
+  --htl-color-border: #2e2e30;
+  --htl-color-text: #f2efe6;
+  --htl-color-text-muted: #8d8b83;
+  --htl-color-accent: #f40c3f;
+  --htl-color-accent-ink: #0b0b0c;
+  --htl-color-star: #f40c3f;
+  --htl-color-danger: #f40c3f;
+  --htl-color-success: #9be15d;
+  --htl-color-warning: #f2c14e;
+
+  /* 细线（hairline）—— 本设计的主角 */
+  --htl-color-hairline: rgba(242, 239, 230, 0.2);
+  --htl-color-hairline-strong: rgba(242, 239, 230, 0.42);
+  --htl-color-ink-hairline: rgba(11, 11, 12, 0.28);
+  /* 背景列网格：极淡，只给纸面结构感，不参与分隔 */
+  --htl-color-grid: rgba(242, 239, 230, 0.055);
 
   /* 遮罩扩展色 */
-  --htl-color-overlay: #00000080;
-  --htl-color-overlay-dark: #000000cc;
+  --htl-color-overlay: rgba(7, 7, 8, 0.88);
+  --htl-color-overlay-dark: rgba(4, 4, 5, 0.94);
 
   /* ==========================================
    * 2. 字体 (Fonts)
    * ========================================== */
-  --htl-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --htl-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --htl-font-sans: "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --htl-font-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", "Courier New", monospace;
+  --htl-font-display: "Arial Black", "Helvetica Neue", Helvetica, "PingFang SC", "Microsoft YaHei", sans-serif;
 
   /* ==========================================
    * 3. 字号 (Font Sizes)
    * ========================================== */
+  --htl-fs-2xs: 10px;
   --htl-fs-xs: 12px;
   --htl-fs-sm: 14px;
   --htl-fs-md: 16px;
@@ -40,33 +58,39 @@
   --htl-space-4: 16px;
   --htl-space-5: 24px;
   --htl-space-6: 32px;
+  --htl-gutter: clamp(16px, 4vw, 56px);
 
   /* ==========================================
    * 5. 形状与时间轴布局 (Shapes & Timeline Layout)
    * ========================================== */
-  --htl-radius-sm: 4px;
-  --htl-radius-md: 8px;
-  --htl-radius-lg: 12px;
-  --htl-timeline-width: 3px;
-  --htl-timeline-max-width: 800px;
-  --htl-axis-col: 88px;
-  --htl-axis-wave: 26px;
-  --htl-entry-gap: 16px;
-  --htl-row-min-h: 64px;
+  --htl-radius-sm: 0;
+  --htl-radius-md: 0;
+  --htl-radius-lg: 0;
+  --htl-hairline: 1px;
+  --htl-timeline-width: 1px;
+  --htl-timeline-max-width: 1280px;
+  --htl-date-col: 148px;
+  --htl-rail-col: 44px;
+  --htl-index-col: 64px;
+  --htl-row-min-h: 72px;
+  --htl-masthead-h: 52px;
+  --htl-filter-h: 60px;
 
   /* ==========================================
    * 6. 动效与阴影 (Transitions & Shadows)
    * ========================================== */
-  --htl-transition-fast: 150ms ease;
-  --htl-transition-base: 250ms ease;
-  --htl-shadow-card: 0 1px 3px #0000001a;
+  --htl-transition-fast: 120ms ease;
+  --htl-transition-base: 220ms ease;
+  --htl-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --htl-shadow-card: 6px 6px 0 var(--htl-color-accent);
 
   /* ==========================================
    * 7. 层级体系 (Z-Index Hierarchy)
    * ========================================== */
   --htl-z-sticky: 10;
-  --htl-z-filter: 20;
-  --htl-z-nav: 30;
+  --htl-z-nav: 25;
+  --htl-z-filter: 30;
+  --htl-z-masthead: 40;
   --htl-z-drawer: 50;
   --htl-z-modal: 100;
   --htl-z-lightbox: 200;
