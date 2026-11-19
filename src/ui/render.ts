@@ -10,6 +10,7 @@ import type { YearGroup } from '../core/select';
 import { buildCards } from '../core/select';
 import { el } from './dom';
 import { renderYearGroup } from './parts/yearGroup';
+import { drawAxis } from './parts/axis';
 
 export { renderEntry } from './parts/entry';
 export { renderYearGroup } from './parts/yearGroup';
@@ -195,6 +196,13 @@ export function render(state: AppState): void {
       // 部分环境不支持 instant 选项
       window.scrollTo(0, scrollY);
     }
+  }
+
+  // 6.5 画穿过所有节点的居中折线主轴
+  try {
+    drawAxis(root);
+  } catch {
+    // 主轴是纯视觉层，失败不影响功能
   }
 
   // 7. 应用 flashId 高亮并在 FLASH_DURATION_MS 后移除（§6.4）

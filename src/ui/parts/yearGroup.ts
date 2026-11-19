@@ -1,6 +1,7 @@
 /**
- * MOD-010: 年份分组与月份小节 (yearGroup.ts) — v0.0.3 巨字年份条 + 月份刻度
+ * MOD-010: 年份分组与月份小节 (yearGroup.ts)
  * 负责渲染每个年份的分组容器、吸顶年份标题、月份小节标识与事件行。
+ * 条目左右交替由全局序号决定，跨年份也保持交替节奏。
  * 严禁使用 innerHTML、严禁自行做业务计算、严禁在此处绑定事件。
  */
 
@@ -22,9 +23,7 @@ export function renderYearGroup(
   });
 
   const months = Array.isArray(group.months) && group.months.length > 0 ? group.months : null;
-  const monthCount = months
-    ? months.filter((m) => m.cards && m.cards.length > 0).length
-    : 0;
+  const monthCount = months ? months.filter((m) => m.cards && m.cards.length > 0).length : 0;
 
   const metaText = group.year
     ? `${pad(group.cards.length, 2)} EVENTS / ${pad(monthCount, 2)} MONTHS`
@@ -50,7 +49,8 @@ export function renderYearGroup(
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
       const seq = seqOf.get(cardView.event.id) ?? 0;
-      host.appendChild(renderEntry(cardView, seq));
+      const side = seq % 2 === 0 ? 'right' : 'left';
+      host.appendChild(renderEntry(cardView, seq, side));
     }
   };
 

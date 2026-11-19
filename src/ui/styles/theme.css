@@ -68,11 +68,15 @@
   --htl-radius-lg: 0;
   --htl-hairline: 1px;
   --htl-timeline-width: 1px;
-  --htl-timeline-max-width: 1280px;
-  --htl-date-col: 148px;
-  --htl-rail-col: 44px;
-  --htl-index-col: 64px;
-  --htl-row-min-h: 72px;
+  --htl-timeline-max-width: 1120px;
+  --htl-axis-col: 104px;
+  --htl-axis-wave: 30px;
+  --htl-entry-gap: 20px;
+  --htl-title-fs: clamp(15px, 1.15vw, 19px);
+  --htl-date-col: 0px;
+  --htl-rail-col: 0px;
+  --htl-index-col: 0px;
+  --htl-row-min-h: 0px;
   --htl-masthead-h: 52px;
   --htl-filter-h: 60px;
 
