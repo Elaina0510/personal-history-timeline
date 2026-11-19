@@ -1,6 +1,6 @@
 /**
  * MOD-013: 筛选条 (filterBar.ts)
- * 职责：分类 chips、星级按钮、搜索框（300ms 防抖）、清空筛选、排序切换。
+ * 职责：星级按钮、搜索框（300ms 防抖）、清空筛选、排序切换。
  *
  * 禁令：
  * - 不做匹配计算（matchFilters 在 core/select）
@@ -47,20 +47,6 @@ export function onKeywordInput(keyword: string): void {
       store.setFilters({ keyword });
     }
   }, SEARCH_DEBOUNCE_MS);
-}
-
-export function toggleCategory(category: string): void {
-  const current = latestState?.view.filters.categories ?? [];
-  let next: string[];
-  if (current.includes(category)) {
-    next = current.filter((c) => c !== category);
-  } else {
-    next = [...current, category];
-  }
-  const store = getStore();
-  if (store) {
-    store.setFilters({ categories: next });
-  }
 }
 
 export function toggleRating(rating: Rating): void {
@@ -120,9 +106,6 @@ export function handleFilterAction(action: string, id?: string, ev?: Event): voi
   }
 
   switch (action) {
-    case 'toggle-filter-category':
-      if (id) toggleCategory(id);
-      break;
     case 'toggle-filter-rating':
       if (id === 'min-four' || id === 'minFour' || id === '>=4') {
         toggleMinFour();
@@ -204,40 +187,7 @@ export function renderFilterBar(state: AppState): void {
     onKeywordInput(keyword);
   });
 
-  // 2. 分类 chips
-  const categories = state.data.categories ?? [];
-  const selectedCategories = state.view.filters.categories ?? [];
-  const catChips: HTMLElement[] = categories.map((cat, idx) => {
-    const isSelected = selectedCategories.includes(cat);
-    const catSlot = (idx % 6) + 1;
-    const chipClass = isSelected
-      ? `htl-chip htl-chip--cat-${catSlot} htl-chip--active`
-      : `htl-chip htl-chip--cat-${catSlot}`;
-
-    return el(
-      'button',
-      {
-        type: 'button',
-        class: chipClass,
-        'data-action': 'toggle-filter-category',
-        'data-id': cat,
-        'data-category': cat,
-        'aria-pressed': isSelected ? 'true' : 'false',
-      },
-      [cat]
-    );
-  });
-
-  const catContainer = el(
-    'div',
-    {
-      class: 'htl-filter-categories',
-      style: 'display: flex; flex-wrap: wrap; gap: var(--htl-space-1, 4px); align-items: center;',
-    },
-    catChips
-  );
-
-  // 3. 星级快捷与等值多选
+  // 2. 星级快捷与等值多选
   const isMinFour = Boolean(state.view.filters.minFour);
   const selectedRatings = state.view.filters.ratings ?? [];
 
@@ -282,7 +232,7 @@ export function renderFilterBar(state: AppState): void {
     starBtns
   );
 
-  // 4. 操作项：排序切换与清空筛选
+  // 3. 操作项：排序切换与清空筛选
   const sortOrder = state.view.sortOrder ?? 'desc';
   const sortLabel = sortOrder === 'desc' ? '降序 (新→旧)' : '正序 (旧→新)';
   const sortBtn = el(
@@ -317,7 +267,7 @@ export function renderFilterBar(state: AppState): void {
     [sortBtn, clearBtn]
   );
 
-  container.replaceChildren(searchInput, catContainer, ratingContainer, actionsContainer);
+  container.replaceChildren(searchInput, ratingContainer, actionsContainer);
 }
 
 // 自动向 UI 渲染主流程注册

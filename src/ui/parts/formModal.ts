@@ -25,7 +25,6 @@ import type {
   TimelineEvent,
 } from '../../core/types';
 import {
-  CATEGORY_MAX,
   DETAIL_MAX,
   ISSUE_MESSAGES,
   LINK_NAME_MAX,
@@ -152,10 +151,6 @@ export function openEventForm(
   const isEdit = opts.mode === 'edit' && targetEvent !== null;
   const initialDate = isEdit && targetEvent ? targetEvent.date : getTodayDateString();
   const initialTitle = isEdit && targetEvent ? targetEvent.title : '';
-  const initialCategory =
-    isEdit && targetEvent
-      ? targetEvent.category
-      : state.data.categories[0] ?? '生活事件';
   const initialCover = isEdit && targetEvent ? targetEvent.cover ?? '' : '';
   const initialLinks: EventLink[] =
     isEdit && targetEvent && Array.isArray(targetEvent.links)
@@ -168,7 +163,6 @@ export function openEventForm(
 
   let currentDate = initialDate;
   let currentTitle = initialTitle;
-  let currentCategory = initialCategory;
   let currentCover = initialCover;
   let currentLinks: EventLink[] = structuredClone(initialLinks);
   let currentRelatedIds: string[] = [...initialRelatedIds];
@@ -178,7 +172,6 @@ export function openEventForm(
     if (isDirty) return true;
     if (currentDate !== initialDate) return true;
     if (currentTitle !== initialTitle) return true;
-    if (currentCategory !== initialCategory) return true;
     if (currentCover !== initialCover) return true;
     if (currentRelatedIds.length !== initialRelatedIds.length) return true;
     if (currentRelatedIds.some((id, idx) => id !== initialRelatedIds[idx])) return true;
@@ -316,87 +309,7 @@ export function openEventForm(
     clearFieldError('title');
   });
 
-  // 4. 字段：分类
-  const categoryFieldBox = el('div', {}, [
-    el(
-      'label',
-      {
-        style:
-          'display: block; font-size: var(--htl-fs-sm, 14px); font-weight: 500; margin-bottom: 6px; color: var(--htl-color-text, #1e293b);',
-      },
-      ['分类 *']
-    ),
-    el(
-      'div',
-      { style: 'display: flex; gap: 8px; align-items: center;' },
-      [
-        el('select', {
-          class: 'htl-form__select',
-          'data-focus-key': 'form.event.category',
-          'data-field': 'category',
-          style:
-            'flex: 1; border: 1px solid var(--htl-color-border, #e2e8f0); border-radius: var(--htl-radius-sm, 4px); padding: 8px 12px; font-size: var(--htl-fs-sm, 14px); background-color: var(--htl-color-surface, #ffffff); color: var(--htl-color-text, #1e293b); box-sizing: border-box;',
-        }),
-        el(
-          'button',
-          {
-            type: 'button',
-            'data-action': 'add-category',
-            style:
-              'padding: 8px 12px; font-size: var(--htl-fs-xs, 12px); border: 1px solid var(--htl-color-border, #e2e8f0); border-radius: var(--htl-radius-sm, 4px); background-color: var(--htl-color-surface, #ffffff); cursor: pointer; white-space: nowrap;',
-          },
-          ['+ 新分类']
-        ),
-      ]
-    ),
-    el('div', {
-      class: 'htl-form__error',
-      'data-error-field': 'category',
-      style:
-        'display: none; color: var(--htl-color-danger, #e5484d); font-size: var(--htl-fs-xs, 12px); margin-top: 4px;',
-    }),
-  ]);
-
-  const categorySelect = categoryFieldBox.querySelector('select') as HTMLSelectElement;
-  const addCategoryBtn = categoryFieldBox.querySelector('button') as HTMLButtonElement;
-
-  function refreshCategoryOptions(): void {
-    categorySelect.replaceChildren();
-    const categories = store.getState().data.categories;
-    for (const cat of categories) {
-      const opt = el('option', { value: cat }, [cat]);
-      if (cat === currentCategory) {
-        (opt as HTMLOptionElement).selected = true;
-      }
-      categorySelect.appendChild(opt);
-    }
-  }
-  refreshCategoryOptions();
-
-  categorySelect.addEventListener('change', () => {
-    currentCategory = categorySelect.value;
-    isDirty = true;
-    clearFieldError('category');
-  });
-
-  addCategoryBtn.addEventListener('click', () => {
-    const newName = window.prompt('请输入新分类名称（1~20 字）：');
-    if (newName) {
-      const trimmed = newName.trim();
-      if (trimmed) {
-        const res = store.addCategory(trimmed);
-        if (res.ok) {
-          currentCategory = trimmed;
-          isDirty = true;
-          refreshCategoryOptions();
-        } else {
-          toast(res.issues[0]?.message || '添加分类失败', 'error');
-        }
-      }
-    }
-  });
-
-  // 5. 字段：封面（两页签：图片链接 / 本地上传）
+  // 4. 字段：封面（两页签：图片链接 / 本地上传）
   const coverFieldBox = el('div', {}, [
     el(
       'label',
@@ -1003,13 +916,11 @@ export function openEventForm(
 
     const dateVal = dateInput.value.trim();
     const titleVal = titleInput.value.trim();
-    const categoryVal = categorySelect.value.trim();
 
     // 1. Core 校验
     const issues = validateEventInput({
       date: dateVal,
       title: titleVal,
-      category: categoryVal,
     });
 
     // 2. 封面校验
@@ -1087,7 +998,6 @@ export function openEventForm(
       const createRes = store.createEvent({
         date: dateVal,
         title: titleVal,
-        category: categoryVal,
       });
 
       if (!createRes.ok) {
@@ -1128,7 +1038,6 @@ export function openEventForm(
         eventId: opts.eventId,
         date: dateVal,
         title: titleVal,
-        category: categoryVal,
         cover: currentCover || null,
         links: currentLinks.map((l) => ({ name: l.name.trim(), url: l.url.trim() })),
       });
@@ -1199,7 +1108,6 @@ export function openEventForm(
   // 装配
   formEl.appendChild(dateFieldBox);
   formEl.appendChild(titleFieldBox);
-  formEl.appendChild(categoryFieldBox);
   formEl.appendChild(coverFieldBox);
   formEl.appendChild(linksFieldBox);
   formEl.appendChild(relationsFieldBox);
