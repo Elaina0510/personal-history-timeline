@@ -4,7 +4,6 @@ import {
   buildCards,
   buildRelationIndex,
   compareEvents,
-  isExpandable,
   latestRecord,
   matchFilters,
   sortedRecords,
@@ -28,7 +27,6 @@ function makeEvent(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
     id: 'evt_1770000000000_000001',
     date: '2026-01-01',
     title: '测试事件标题',
-    category: '其他',
     links: [],
     relatedIds: [],
     records: [],
@@ -39,7 +37,6 @@ function makeEvent(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
 }
 
 const defaultFilter: FilterState = {
-  categories: [],
   ratings: [],
   minFour: false,
   keyword: '',
@@ -138,38 +135,43 @@ describe('MOD-006 select: S1~S20 规范测试', () => {
     expect(ascGroups[0]!.cards.map(c => c.event.id)).toEqual(['evt_day_first', 'evt_day_second']);
   });
 
-  it('S7: filters={categories:[\'AI模型\']} -> buildCards -> 只剩该分类', () => {
-    const e1 = makeEvent({ id: 'evt_ai', category: 'AI模型' });
-    const e2 = makeEvent({ id: 'evt_game', category: '游戏发售' });
-    const filter: FilterState = { ...defaultFilter, categories: ['AI模型'] };
+  it('S-A1: 2 条事件（无 category 字段，星级 3 与 5） -> buildCards -> 只剩 5 星事件且 CardView 无 expandable', () => {
+    const e1 = makeEvent({
+      id: 'evt_3',
+      records: [makeRecord({ rating: 3 })],
+    });
+    const e2 = makeEvent({
+      id: 'evt_5',
+      records: [makeRecord({ rating: 5 })],
+    });
 
-    const groups = buildCards([e1, e2], filter, 'desc');
+    const groups = buildCards([e1, e2], { ratings: [5], minFour: false, keyword: '' }, 'desc');
     const allCards = groups.flatMap(g => g.cards);
     expect(allCards).toHaveLength(1);
-    expect(allCards[0]!.event.id).toBe('evt_ai');
-    expect(allCards[0]!.event.category).toBe('AI模型');
+    expect(allCards[0]!.event.id).toBe('evt_5');
+    expect(Object.hasOwn(allCards[0]!, 'expandable')).toBe(false);
   });
 
-  it('S8: 上述 + ratings:[5] -> buildCards -> 两者交集', () => {
+  it('S8: keyword + ratings:[5] -> buildCards -> 两者交集', () => {
     const e1 = makeEvent({
       id: 'evt_ai_5',
-      category: 'AI模型',
+      title: 'AI模型 5星',
       records: [makeRecord({ rating: 5 })],
     });
     const e2 = makeEvent({
       id: 'evt_ai_3',
-      category: 'AI模型',
+      title: 'AI模型 3星',
       records: [makeRecord({ rating: 3 })],
     });
     const e3 = makeEvent({
       id: 'evt_game_5',
-      category: '游戏发售',
+      title: '游戏发售 5星',
       records: [makeRecord({ rating: 5 })],
     });
 
     const filter: FilterState = {
       ...defaultFilter,
-      categories: ['AI模型'],
+      keyword: 'AI模型',
       ratings: [5],
     };
 
@@ -274,40 +276,6 @@ describe('MOD-006 select: S1~S20 规范测试', () => {
     expect(cardA?.relationCount).toBe(0);
   });
 
-  it('S17: 记录 3 条，全部 detail 为空、无 cover/links/relations -> isExpandable -> true（records>1）', () => {
-    const e = makeEvent({
-      records: [
-        makeRecord({ id: 'r1', detail: '' }),
-        makeRecord({ id: 'r2', detail: '   ' }),
-        makeRecord({ id: 'r3', detail: undefined }),
-      ],
-      cover: undefined,
-      links: [],
-    });
-
-    expect(isExpandable(e, 0)).toBe(true);
-  });
-
-  it('S18: 记录 1 条、detail 空、无 cover/links/relations -> isExpandable -> false', () => {
-    const e = makeEvent({
-      records: [makeRecord({ id: 'r1', detail: '' })],
-      cover: undefined,
-      links: [],
-    });
-
-    expect(isExpandable(e, 0)).toBe(false);
-  });
-
-  it('S19: 记录 1 条 + 有 cover -> isExpandable -> true', () => {
-    const e = makeEvent({
-      records: [makeRecord({ id: 'r1', detail: '' })],
-      cover: 'data:image/jpeg;base64,12345',
-      links: [],
-    });
-
-    expect(isExpandable(e, 0)).toBe(true);
-  });
-
   it('S20: 关联 A-B，A 日期晚于 B -> relations 中 A 侧的 dir -> \'before\'（对方更早）', () => {
     const a = makeEvent({
       id: 'evt_a',
@@ -387,17 +355,6 @@ describe('MOD-006 select: S1~S20 规范测试', () => {
 
       const ascCards = buildCards(events, defaultFilter, 'asc').flatMap(g => g.cards);
       expect(allYears(ascCards)).toEqual(['2024', '2025', '2026']);
-    });
-
-    it('isExpandable 支持 links 与 relationCount 触发', () => {
-      const e1 = makeEvent({
-        records: [makeRecord()],
-        links: [{ name: 'Docs', url: 'https://example.com' }],
-      });
-      expect(isExpandable(e1, 0)).toBe(true);
-
-      const e2 = makeEvent({ records: [makeRecord()] });
-      expect(isExpandable(e2, 1)).toBe(true);
     });
 
     it('buildRelationIndex 剔除自身关联与不存在的 ID', () => {

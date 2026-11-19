@@ -28,7 +28,6 @@ export interface CardView {
   relations: RelationView[];
   relationCount: number;
   recordCount: number;
-  expandable: boolean;
 }
 
 export interface MonthGroup {
@@ -119,20 +118,6 @@ function getEventComparator(order: SortOrder): (a: TimelineEvent, b: TimelineEve
   };
 }
 
-/**
- * 判断事件是否满足展开条件（REQ-014 R1 修订）
- * records.length > 1 || 任一 detail 非空 || cover || links.length>0 || relationCount>0
- */
-export function isExpandable(e: TimelineEvent, relationCount: number): boolean {
-  const records = e.records ?? [];
-  return (
-    records.length > 1 ||
-    records.some(r => typeof r.detail === 'string' && r.detail.trim() !== '') ||
-    Boolean(e.cover && e.cover.trim() !== '') ||
-    (Array.isArray(e.links) && e.links.length > 0) ||
-    relationCount > 0
-  );
-}
 
 /**
  * 反向关联索引构建：
@@ -194,20 +179,12 @@ export function buildRelationIndex(events: TimelineEvent[]): Map<string, string[
 
 /**
  * 筛选匹配：
- * 1. 分类：空则不限，否则 OR
- * 2. 星级：minFour 优先（rating>=4）；否则 ratings 含该值；无记录事件一律 false（REQ-005）
- * 3. 关键词：小写、split(/\s+/) 后 every 命中，禁止正则
- * 三者 AND
+ * 1. 星级：minFour 优先（rating>=4）；否则 ratings 含该值；无记录事件一律 false（REQ-005）
+ * 2. 关键词：小写、split(/\s+/) 后 every 命中，禁止正则
+ * 两者 AND
  */
 export function matchFilters(e: TimelineEvent, f: FilterState): boolean {
-  // 1. 分类筛选
-  if (Array.isArray(f.categories) && f.categories.length > 0) {
-    if (!f.categories.includes(e.category)) {
-      return false;
-    }
-  }
-
-  // 2. 星级筛选
+  // 1. 星级筛选
   if (f.minFour) {
     const latest = latestRecord(e);
     if (!latest || latest.rating < 4) {
@@ -263,7 +240,7 @@ export function allYears(cards: CardView[]): string[] {
  * 1. 构建全量关联索引
  * 2. 筛选
  * 3. 排序（按 order，同日内部恒 createdAt 升序）
- * 4. 组装 CardView（计算最新记录、关联卡片视图、跨度文案、展开能力）
+ * 4. 组装 CardView（计算最新记录、关联卡片视图、跨度文案）
  * 5. 年份分组（组顺序与组内顺序同向）
  */
 export function buildCards(
@@ -328,7 +305,6 @@ export function buildCards(
       const latest = latestRecord(e);
       const relationCount = relations.length;
       const recordCount = Array.isArray(e.records) ? e.records.length : 0;
-      const expandable = isExpandable(e, relationCount);
 
       cards.push({
         event: e,
@@ -337,7 +313,6 @@ export function buildCards(
         relations,
         relationCount,
         recordCount,
-        expandable,
       });
     } catch {
       // 坏数据跳过

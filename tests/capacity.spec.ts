@@ -17,13 +17,11 @@ function createMockData(events: Partial<TimelineEvent>[] = []): TimelineData {
     schemaVersion: 1,
     appVersion: '0.0.1',
     savedAt: '2026-11-18T14:00:00+08:00',
-    categories: ['其他'],
     ui: { sortOrder: 'desc' },
     events: events.map((e, idx) => ({
       id: `evt_1700000000000_${String(idx).padStart(6, '0')}`,
       date: '2026-11-18',
       title: `Event ${idx}`,
-      category: '其他',
       links: [],
       relatedIds: [],
       records: [],

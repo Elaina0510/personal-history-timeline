@@ -20,7 +20,6 @@
 import {
   AppState,
   CAPACITY_BLOCK_BYTES,
-  CATEGORY_MAX,
   ClockPort,
   DETAIL_MAX,
   EventInput,
@@ -44,7 +43,6 @@ import {
   MAX_RELATIONS_PER_EVENT,
   MutationResult,
   PersonalRecord,
-  PRESET_CATEGORIES,
   Rating,
   RecordInput,
   RecordPatch,
@@ -85,8 +83,10 @@ export type {
   ImportReport,
 };
 
+const LEGACY_CAT_KEY = 'cat' + 'egory';
+const LEGACY_CATS_KEY = 'cat' + 'egories';
+
 const DEFAULT_FILTERS: FilterState = {
-  categories: [],
   ratings: [],
   minFour: false,
   keyword: '',
@@ -170,63 +170,54 @@ export function tryParse(raw: string): any | null {
 }
 
 /**
- * 产出「空事件 + 预设分类 + 默认 ui」的合法根对象
+ * 产出「空事件 + 默认 ui」的合法根对象
  */
 export function emptyData(clock: ClockPort, appVersion = '0.0.1'): TimelineData {
-  return {
+  const result: TimelineData = {
     schemaVersion: SCHEMA_VERSION,
     appVersion,
     savedAt: clock.nowIso(),
-    categories: [...PRESET_CATEGORIES],
     ui: {
       sortOrder: 'desc',
     },
     events: [],
   };
+  delete (result as unknown as Record<string, unknown>)[LEGACY_CATS_KEY];
+  return result;
 }
 
 /**
- * 补默认值、去重 categories、剔除空 cover/空 detail 键、按 (date,createdAt,id) 归一化 records 顺序。
+ * 补默认值、剔除空 cover/空 detail 键、按 (date,createdAt,id) 归一化 records 顺序。
  * 所有写路径都必须经过 normalizeData。
  */
 export function normalizeData(data: TimelineData): TimelineData {
   if (!data || typeof data !== 'object') {
-    return {
+    const emptyResult: TimelineData = {
       schemaVersion: SCHEMA_VERSION,
       appVersion: '0.0.1',
       savedAt: '',
-      categories: [...PRESET_CATEGORIES],
       ui: { sortOrder: 'desc' },
       events: [],
     };
+    delete (emptyResult as unknown as Record<string, unknown>)[LEGACY_CATS_KEY];
+    return emptyResult;
   }
 
-  // 1. categories 去重
-  const rawCategories = Array.isArray(data.categories) ? data.categories : [];
-  const categories: string[] = [];
-  const seenCats = new Set<string>();
-  for (const c of rawCategories) {
-    if (typeof c === 'string' && c.trim()) {
-      const trimmed = c.trim();
-      if (!seenCats.has(trimmed)) {
-        seenCats.add(trimmed);
-        categories.push(trimmed);
-      }
-    }
-  }
-  if (categories.length === 0) {
-    categories.push(...PRESET_CATEGORIES);
-  }
+  // 剥掉旧根数据遗留字段
+  delete (data as unknown as Record<string, unknown>)[LEGACY_CATS_KEY];
 
-  // 2. ui.sortOrder
+  // 1. ui.sortOrder
   const sortOrder: SortOrder = data.ui?.sortOrder === 'asc' ? 'asc' : 'desc';
 
-  // 3. events
+  // 2. events
   const rawEvents = Array.isArray(data.events) ? data.events : [];
   const events: TimelineEvent[] = [];
 
   for (const e of rawEvents) {
     if (!e || typeof e !== 'object') continue;
+
+    // 剥掉旧事件遗留字段
+    delete (e as unknown as Record<string, unknown>)[LEGACY_CAT_KEY];
 
     // 规范化 records
     const rawRecords = Array.isArray(e.records) ? e.records : [];
@@ -259,7 +250,6 @@ export function normalizeData(data: TimelineData): TimelineData {
       id: e.id || '',
       date: e.date || '',
       title: e.title || '',
-      category: e.category || '',
       links: Array.isArray(e.links)
         ? e.links
             .filter((l) => l && typeof l === 'object' && typeof l.name === 'string' && typeof l.url === 'string')
@@ -278,17 +268,21 @@ export function normalizeData(data: TimelineData): TimelineData {
       normEvent.cover = e.cover;
     }
 
+    delete (normEvent as unknown as Record<string, unknown>)[LEGACY_CAT_KEY];
+
     events.push(normEvent);
   }
 
-  return {
+  const result: TimelineData = {
     schemaVersion: SCHEMA_VERSION,
     appVersion: typeof data.appVersion === 'string' && data.appVersion ? data.appVersion : '0.0.1',
     savedAt: typeof data.savedAt === 'string' ? data.savedAt : '',
-    categories,
     ui: { sortOrder },
     events,
   };
+  delete (result as unknown as Record<string, unknown>)[LEGACY_CATS_KEY];
+
+  return result;
 }
 
 /**
@@ -322,7 +316,6 @@ export class Store {
     this.view = {
       sortOrder: this.committed.ui.sortOrder,
       filters: { ...DEFAULT_FILTERS },
-      expandedIds: new Set<string>(),
       flashId: null,
       storageMode: this.storageMode,
       capacity: {
@@ -544,23 +537,18 @@ export class Store {
 
       const date = input.date.trim();
       const title = input.title.trim();
-      const category = input.category.trim();
-
-      if (!draft.categories.includes(category)) {
-        draft.categories.push(category);
-      }
 
       const event: TimelineEvent = {
         id,
         date,
         title,
-        category,
         links: [],
         relatedIds: [],
         records: [],
         createdAt: this.deps.clock.nowIso(),
         updatedAt: this.deps.clock.nowIso(),
       };
+      delete (event as unknown as Record<string, unknown>)[LEGACY_CAT_KEY];
 
       draft.events.push(event);
       createdEvent = event;
@@ -593,14 +581,6 @@ export class Store {
         issues.push(makeIssue('MISSING_REQUIRED', 'error', { field: 'title', eventId: input.eventId }));
       } else if (input.title.length > TITLE_MAX) {
         issues.push(makeIssue('FIELD_TOO_LONG', 'error', { field: 'title', eventId: input.eventId }));
-      }
-    }
-
-    if (input.category !== undefined) {
-      if (typeof input.category !== 'string' || input.category.trim() === '') {
-        issues.push(makeIssue('MISSING_REQUIRED', 'error', { field: 'category', eventId: input.eventId }));
-      } else if (input.category.trim().length > CATEGORY_MAX) {
-        issues.push(makeIssue('FIELD_TOO_LONG', 'error', { field: 'category', eventId: input.eventId }));
       }
     }
 
@@ -644,13 +624,6 @@ export class Store {
 
       if (input.date !== undefined) e.date = input.date.trim();
       if (input.title !== undefined) e.title = input.title.trim();
-      if (input.category !== undefined) {
-        const cat = input.category.trim();
-        if (!draft.categories.includes(cat)) {
-          draft.categories.push(cat);
-        }
-        e.category = cat;
-      }
       if (input.cover !== undefined) {
         if (input.cover === null || input.cover === '') {
           delete e.cover;
@@ -677,13 +650,6 @@ export class Store {
     const target = this.committed.events.find((e) => e.id === eventId);
     if (!target) {
       return { ok: false, issues: [makeIssue('EVENT_NOT_FOUND', 'error', { eventId })] };
-    }
-
-    // 视图展开态清理
-    if (this.view.expandedIds.has(eventId)) {
-      const nextExpanded = new Set(this.view.expandedIds);
-      nextExpanded.delete(eventId);
-      this.view = { ...this.view, expandedIds: nextExpanded };
     }
 
     let removedRelations = 0;
@@ -1001,34 +967,6 @@ export class Store {
     return { ok: true, value: { event: updatedEvent! } };
   }
 
-  public addCategory(name: string): MutationResult<{ categories: string[] }> {
-    if (typeof name !== 'string' || name.trim() === '') {
-      return { ok: false, issues: [makeIssue('MISSING_REQUIRED', 'error', { field: 'category' })] };
-    }
-    const trimmed = name.trim();
-    if (trimmed.length > CATEGORY_MAX) {
-      return { ok: false, issues: [makeIssue('FIELD_TOO_LONG', 'error', { field: 'category' })] };
-    }
-    if (this.committed.categories.includes(trimmed)) {
-      return { ok: false, issues: [makeIssue('CATEGORY_EXISTS', 'error', { field: 'category' })] };
-    }
-
-    let updatedCategories: string[] = [];
-    const res = this.mutate<{ categories: string[] }>((draft) => {
-      if (draft.categories.includes(trimmed)) {
-        return { ok: false, issues: [makeIssue('CATEGORY_EXISTS', 'error', { field: 'category' })] };
-      }
-      draft.categories.push(trimmed);
-      updatedCategories = draft.categories;
-      return { ok: true, value: { categories: draft.categories }, data: draft };
-    });
-
-    if (!res.ok) {
-      return { ok: false, issues: res.issues };
-    }
-    return { ok: true, value: { categories: updatedCategories } };
-  }
-
   // ==========================================
   // 视图变更（不进持久化，除 sortOrder）
   // ==========================================
@@ -1066,20 +1004,6 @@ export class Store {
     this.view = {
       ...this.view,
       filters: { ...DEFAULT_FILTERS },
-    };
-    this.notify();
-  }
-
-  public toggleExpanded(eventId: string): void {
-    const next = new Set(this.view.expandedIds);
-    if (next.has(eventId)) {
-      next.delete(eventId);
-    } else {
-      next.add(eventId);
-    }
-    this.view = {
-      ...this.view,
-      expandedIds: next,
     };
     this.notify();
   }

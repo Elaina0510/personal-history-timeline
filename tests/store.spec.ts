@@ -11,7 +11,6 @@ import {
   LS_BACKUP_KEY,
   LS_CORRUPT_PREFIX,
   LS_KEY,
-  PRESET_CATEGORIES,
   StoragePort,
 } from '../src/core/types';
 
@@ -119,14 +118,12 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
       schemaVersion: 1,
       appVersion: '0.0.1',
       savedAt: '2026-11-18T10:00:00+08:00',
-      categories: [...PRESET_CATEGORIES],
       ui: { sortOrder: 'desc' },
       events: [
         {
           id: 'evt_1770000000000_000001',
           date: '2026-11-18',
           title: '已存在事件',
-          category: '生活事件',
           links: [],
           relatedIds: [],
           records: [],
@@ -142,7 +139,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
         {
           date: '2026-11-18',
           title: '种子事件',
-          category: '游戏发售',
         },
       ],
     });
@@ -160,7 +156,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
           id: 'evt_1770000000000_000002',
           date: '2026-11-18',
           title: '种子事件',
-          category: '游戏发售',
           links: [],
           relatedIds: [],
           records: [],
@@ -215,7 +210,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const res = store.createEvent({
       date: '2026-11-18',
       title: '新事件T7',
-      category: '生活事件',
     });
     expect(res.ok).toBe(true);
     if (res.ok) {
@@ -235,7 +229,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const res = store.createEvent({
       date: '2026-11-18',
       title: '',
-      category: '生活事件',
     });
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -259,7 +252,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const res = store.createEvent({
       date: '2026-11-18',
       title: '尝试写入的事件',
-      category: '生活事件',
     });
 
     expect(res.ok).toBe(false);
@@ -275,9 +267,9 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T10: 已存在 2 条其他事件关联 A -> deleteEvent(A) -> value.removedRelations===2，其他事件的 relatedIds 不再含 A', () => {
     const { store } = createTestStore();
     store.init(null);
-    const eA = store.createEvent({ date: '2026-01-01', title: '事件A', category: '生活事件' });
-    const eB = store.createEvent({ date: '2026-01-02', title: '事件B', category: '生活事件' });
-    const eC = store.createEvent({ date: '2026-01-03', title: '事件C', category: '生活事件' });
+    const eA = store.createEvent({ date: '2026-01-01', title: '事件A' });
+    const eB = store.createEvent({ date: '2026-01-02', title: '事件B' });
+    const eC = store.createEvent({ date: '2026-01-03', title: '事件C' });
     if (!eA.ok || !eB.ok || !eC.ok) throw new Error('create failed');
     const idA = eA.value.event.id;
     const idB = eB.value.event.id;
@@ -306,7 +298,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T11: 事件已有 20 条记录 -> addRecord -> ok===false，issues 含 TOO_MANY_RECORDS', () => {
     const { store } = createTestStore();
     store.init(null);
-    const evRes = store.createEvent({ date: '2026-01-01', title: '事件T11', category: '生活事件' });
+    const evRes = store.createEvent({ date: '2026-01-01', title: '事件T11' });
     if (!evRes.ok) throw new Error('create failed');
     const eventId = evRes.value.event.id;
 
@@ -338,7 +330,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T12: setRelations(A,[A]) -> ok===false，issues 含 SELF_RELATION', () => {
     const { store } = createTestStore();
     store.init(null);
-    const evRes = store.createEvent({ date: '2026-01-01', title: '事件A', category: '生活事件' });
+    const evRes = store.createEvent({ date: '2026-01-01', title: '事件A' });
     if (!evRes.ok) throw new Error('create failed');
     const idA = evRes.value.event.id;
 
@@ -352,7 +344,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T13: A 的关联合计（主动+被动，均不含 B）已为 10 条 -> setRelations(B, [...B的原有关联, A]) -> ok===false，issues 含 TOO_MANY_RELATIONS；A 的结果关联数仍为 10', () => {
     const { store } = createTestStore();
     store.init(null);
-    const eA = store.createEvent({ date: '2026-01-01', title: '事件A', category: '生活事件' });
+    const eA = store.createEvent({ date: '2026-01-01', title: '事件A' });
     if (!eA.ok) throw new Error();
     const idA = eA.value.event.id;
 
@@ -362,7 +354,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
       const e = store.createEvent({
         date: `2026-01-${String(i + 2).padStart(2, '0')}`,
         title: `事件O${i}`,
-        category: '生活事件',
       });
       if (!e.ok) throw new Error();
       otherIds.push(e.value.event.id);
@@ -370,7 +361,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     store.setRelations(idA, otherIds);
 
     // 创建事件 B
-    const eB = store.createEvent({ date: '2026-02-01', title: '事件B', category: '生活事件' });
+    const eB = store.createEvent({ date: '2026-02-01', title: '事件B' });
     if (!eB.ok) throw new Error();
     const idB = eB.value.event.id;
 
@@ -394,8 +385,8 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T14: 正常数据 -> exportJson() -> 可被 JSON.parse，events 长度一致，缩进为 2', () => {
     const { store } = createTestStore();
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: 'E1', category: '生活事件' });
-    store.createEvent({ date: '2026-01-02', title: 'E2', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: 'E1' });
+    store.createEvent({ date: '2026-01-02', title: 'E2' });
 
     const json = store.exportJson();
     const parsed = JSON.parse(json);
@@ -407,10 +398,10 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const storage = new MemoryStoragePort();
     const { store } = createTestStore({ storage });
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: '已有事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '已有事件' });
 
     const importRaw = JSON.stringify({
-      events: [{ date: '2026-02-01', title: '导入的新事件', category: '生活事件' }],
+      events: [{ date: '2026-02-01', title: '导入的新事件' }],
     });
 
     const preview = store.previewImport({ raw: importRaw, mode: 'overwrite' });
@@ -427,7 +418,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T16: 导入后字节数 ≥ 4718592 -> applyImport -> ok===false，issues 含 CAPACITY_EXCEEDED，数据未变', () => {
     const { store } = createTestStore();
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: '原事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '原事件' });
     const beforeEvents = store.getState().data.events;
 
     // estimateBytes = json.length * 2，构造超 4.5MiB (4718592 字节)
@@ -437,7 +428,6 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
         {
           date: '2026-01-01',
           title: '超大事件',
-          category: '生活事件',
           records: [
             {
               date: '2026-01-01',
@@ -462,13 +452,13 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const storage = new MemoryStoragePort();
     const { store } = createTestStore({ storage });
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: '原事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '原事件' });
     const beforeEvents = store.getState().data.events;
 
     storage.setThrowOnWrite(LS_BACKUP_KEY, new Error('Backup disk full'));
 
     const importRaw = JSON.stringify({
-      events: [{ date: '2026-02-01', title: '试图覆盖的事件', category: '生活事件' }],
+      events: [{ date: '2026-02-01', title: '试图覆盖的事件' }],
     });
 
     const res = store.applyImport({ raw: importRaw, mode: 'overwrite' });
@@ -492,11 +482,11 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
       callCount++;
     });
 
-    store.createEvent({ date: '2026-01-01', title: '事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '事件' });
     expect(callCount).toBe(1);
 
     unsubscribe();
-    store.createEvent({ date: '2026-01-02', title: '事件2', category: '生活事件' });
+    store.createEvent({ date: '2026-01-02', title: '事件2' });
     expect(callCount).toBe(1);
   });
 
@@ -535,7 +525,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T21: 事件 cover 为空串 -> 任意写操作后读 storage.read -> 序列化结果中不含 "cover" 键', () => {
     const { store, storage } = createTestStore();
     store.init(null);
-    const e = store.createEvent({ date: '2026-01-01', title: 'E1', category: '生活事件' });
+    const e = store.createEvent({ date: '2026-01-01', title: 'E1' });
     if (!e.ok) throw new Error();
     store.updateEvent({ eventId: e.value.event.id, cover: '' });
 
@@ -547,7 +537,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('T22: 记录的 detail 为 "" -> 同上 -> 不含 "detail" 键', () => {
     const { store, storage } = createTestStore();
     store.init(null);
-    const e = store.createEvent({ date: '2026-01-01', title: 'E1', category: '生活事件' });
+    const e = store.createEvent({ date: '2026-01-01', title: 'E1' });
     if (!e.ok) throw new Error();
     const r = store.addRecord({
       eventId: e.value.event.id,
@@ -581,10 +571,10 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const storage = new MemoryStoragePort();
     const { store } = createTestStore({ storage });
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: '原始事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '原始事件' });
 
     const importRaw = JSON.stringify({
-      events: [{ date: '2026-02-01', title: '新事件', category: '生活事件' }],
+      events: [{ date: '2026-02-01', title: '新事件' }],
     });
     store.applyImport({ raw: importRaw, mode: 'overwrite' });
     expect(store.getState().data.events[0]?.title).toBe('新事件');
@@ -601,7 +591,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     const { store } = createTestStore();
     store.init(null);
     const seedRaw = JSON.stringify({
-      events: [{ date: '2026-05-01', title: '种子事件重载', category: '游戏发售' }],
+      events: [{ date: '2026-05-01', title: '种子事件重载' }],
     });
     const res = store.reloadFromSeed(seedRaw);
     expect(res.ok).toBe(true);
@@ -614,7 +604,7 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
   it('exportJson 与 storage.read(LS_KEY) 逐字节相同', () => {
     const { store, storage } = createTestStore();
     store.init(null);
-    store.createEvent({ date: '2026-01-01', title: '一致性验证事件', category: '生活事件' });
+    store.createEvent({ date: '2026-01-01', title: '一致性验证事件' });
     const exported = store.exportJson();
     const stored = storage.read(LS_KEY);
     expect(exported).toBe(stored);
@@ -631,9 +621,81 @@ describe('MOD-008 Store: §8.6 T1~T22 事务与状态用例', () => {
     expect(tryParse('{"a":1}')).toEqual({ a: 1 });
 
     const norm = normalizeData(empty);
-    expect(norm.categories).toEqual([...PRESET_CATEGORIES]);
+    expect(Object.hasOwn(norm, 'categories')).toBe(false);
 
     const s = serialize(empty);
     expect(s).toContain('"schemaVersion": 1');
+  });
+
+  // ==========================================
+  // T-A1 ~ T-A3: V0.0.2 兼容与去分类断言
+  // ==========================================
+
+  it('T-A1: 预置 localStorage 为含 categories + 每个事件带 category 的 V0.0.1 数据 -> init(null) -> 剥掉分类字段且 appVersion 为 0.0.2', () => {
+    const storage = new MemoryStoragePort();
+    const oldV1Data = {
+      schemaVersion: 1,
+      appVersion: '0.0.2',
+      savedAt: '2026-11-18T10:00:00+08:00',
+      categories: ['生活', '工作'],
+      ui: { sortOrder: 'desc' },
+      events: [
+        {
+          id: 'evt_1770000000000_000001',
+          date: '2026-11-18',
+          title: '旧事件1',
+          category: '生活',
+          links: [],
+          relatedIds: [],
+          records: [],
+          createdAt: '2026-11-18T10:00:00+08:00',
+          updatedAt: '2026-11-18T10:00:00+08:00',
+        },
+        {
+          id: 'evt_1770000000000_000002',
+          date: '2026-11-19',
+          title: '旧事件2',
+          category: '工作',
+          links: [],
+          relatedIds: [],
+          records: [],
+          createdAt: '2026-11-18T10:00:00+08:00',
+          updatedAt: '2026-11-18T10:00:00+08:00',
+        },
+      ],
+    };
+    storage.write(LS_KEY, JSON.stringify(oldV1Data));
+    const { store } = createTestStore({ storage, appVersion: '0.0.2' });
+    const res = store.init(null);
+    expect(res.source).toBe('storage');
+    const data = store.getState().data;
+    expect(data.events.length).toBe(2);
+    expect(Object.hasOwn(data, 'categories')).toBe(false);
+    for (const e of data.events) {
+      expect(Object.hasOwn(e, 'category')).toBe(false);
+    }
+    expect(data.appVersion).toBe('0.0.2');
+  });
+
+  it('T-A2: 空站 -> createEvent -> ok===true 且事件无 category 键，exportJson() 不含 category 子串', () => {
+    const { store } = createTestStore();
+    store.init(null);
+    const res = store.createEvent({ date: '2026-11-19', title: '测试' });
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(Object.hasOwn(res.value.event, 'category')).toBe(false);
+    }
+    const exported = store.exportJson();
+    expect(exported.includes('category')).toBe(false);
+  });
+
+  it('T-A3: 任意状态 -> setFilters({ ratings: [5] }) -> 不抛错且 view.filters 无 categories 键', () => {
+    const { store } = createTestStore();
+    store.init(null);
+    expect(() => {
+      store.setFilters({ ratings: [5] });
+    }).not.toThrow();
+    const filters = store.getState().view.filters;
+    expect(Object.hasOwn(filters, 'categories')).toBe(false);
   });
 });

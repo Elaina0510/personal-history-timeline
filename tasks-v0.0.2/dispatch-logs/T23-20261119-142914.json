@@ -1,0 +1,4 @@
+[agy] print timeout after 20m0s with turn in progress; returning partial output
+error: print timeout after 20m0s with the turn still in progress; the response is partial
+AGY_ERROR: {"short_error":"print timeout after 20m0s with the turn still in progress; the response is partial","status":"DEADLINE_EXCEEDED","retryable":false,"reason":"print_timeout"}
+{"conversation_id":"483494e4-bebe-4fd1-b721-4990d63d9009","status":"ERROR","response":"","error":"print timeout after 20m0s with the turn still in progress; the response is partial","duration_seconds":1188.446189,"num_turns":1,"usage":{"input_tokens":357734,"output_tokens":51504,"thinking_tokens":31175,"cache_read_tokens":10723207,"total_tokens":409238},"finished_reason":"print_timeout"}
