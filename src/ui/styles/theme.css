@@ -17,23 +17,13 @@
   --htl-color-overlay-dark: #000000cc;
 
   /* ==========================================
-   * 2. 分类色板 6 槽 (Category Palette)
-   * ========================================== */
-  --htl-cat-1: #3b82f6;
-  --htl-cat-2: #10b981;
-  --htl-cat-3: #8b5cf6;
-  --htl-cat-4: #f97316;
-  --htl-cat-5: #ec4899;
-  --htl-cat-6: #06b6d4;
-
-  /* ==========================================
-   * 3. 字体 (Fonts)
+   * 2. 字体 (Fonts)
    * ========================================== */
   --htl-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --htl-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* ==========================================
-   * 4. 字号 (Font Sizes)
+   * 3. 字号 (Font Sizes)
    * ========================================== */
   --htl-fs-xs: 12px;
   --htl-fs-sm: 14px;
@@ -42,7 +32,7 @@
   --htl-fs-xl: 24px;
 
   /* ==========================================
-   * 5. 间距 (Spacing)
+   * 4. 间距 (Spacing)
    * ========================================== */
   --htl-space-1: 4px;
   --htl-space-2: 8px;
@@ -52,23 +42,27 @@
   --htl-space-6: 32px;
 
   /* ==========================================
-   * 6. 形状 (Shapes)
+   * 5. 形状与时间轴布局 (Shapes & Timeline Layout)
    * ========================================== */
   --htl-radius-sm: 4px;
   --htl-radius-md: 8px;
   --htl-radius-lg: 12px;
   --htl-timeline-width: 3px;
-  --htl-card-max-width: 800px;
+  --htl-timeline-max-width: 800px;
+  --htl-axis-col: 88px;
+  --htl-axis-wave: 26px;
+  --htl-entry-gap: 16px;
+  --htl-row-min-h: 64px;
 
   /* ==========================================
-   * 7. 动效与阴影 (Transitions & Shadows)
+   * 6. 动效与阴影 (Transitions & Shadows)
    * ========================================== */
   --htl-transition-fast: 150ms ease;
   --htl-transition-base: 250ms ease;
   --htl-shadow-card: 0 1px 3px #0000001a;
 
   /* ==========================================
-   * 8. 层级体系 (Z-Index Hierarchy)
+   * 7. 层级体系 (Z-Index Hierarchy)
    * ========================================== */
   --htl-z-sticky: 10;
   --htl-z-filter: 20;
