@@ -559,7 +559,6 @@ body.is-past-hero .htl-year-nav {
   padding: 16px 0 8px;
   background-color: var(--htl-color-bg, #0b0b0c);
   border-top: var(--htl-hairline, 1px) solid var(--htl-color-hairline-strong, rgba(242, 239, 230, 0.42));
-  border-bottom: var(--htl-hairline, 1px) solid var(--htl-color-hairline, rgba(242, 239, 230, 0.16));
   font-weight: 700;
   color: var(--htl-color-paper, #f2efe6);
 }
@@ -643,6 +642,12 @@ body.is-past-hero .htl-year-nav {
   padding: 14px 0;
   border-top: var(--htl-hairline, 1px) solid var(--htl-color-hairline, rgba(242, 239, 230, 0.16));
   isolation: isolate;
+}
+
+/* 年份条 / 月份标签下面不再补一条线，下面第一条事件行直接贴上去 */
+.htl-month-group > .htl-row:first-of-type,
+.htl-year-group > .htl-row:first-of-type {
+  border-top: 0;
 }
 
 .htl-row.is-right .htl-cell--entry {
