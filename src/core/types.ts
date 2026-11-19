@@ -18,7 +18,6 @@ export interface TimelineData {
   schemaVersion: 1;
   appVersion: string;        // '0.0.1'
   savedAt: string;           // ISO8601 带本地时区偏移，如 '2026-11-18T21:30:00+08:00'
-  categories: string[];      // 去重；预设在前、自定义按加入顺序追加
   ui: UiPrefs;
   events: TimelineEvent[];   // 不保证有序；展示前由 select.buildCards 排序分组
 }
@@ -36,7 +35,6 @@ export interface TimelineEvent {
   id: string;                // ^(evt)_\d{13}_[0-9a-z]{6}$ ，创建后不可变
   date: string;              // 'YYYY-MM-DD'，事件发生日期
   title: string;             // 1..60
-  category: string;          // 1..20，须存在于 data.categories
   cover?: string;            // 缺省 = 无图
   links: EventLink[];        // 0..10，缺省写 []
   relatedIds: string[];      // 0..10，缺省写 []，不得含自身
@@ -84,7 +82,6 @@ export const CAPACITY_BLOCK_BYTES = Math.floor(4.5 * 1024 * 1024); // 4718592
 export const TITLE_MAX = 60;
 export const SUMMARY_MAX = 80;
 export const DETAIL_MAX = 2000;
-export const CATEGORY_MAX = 20;
 export const LINK_NAME_MAX = 20;
 
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -92,7 +89,6 @@ export const FLASH_DURATION_MS = 2000;
 export const TOAST_DURATION_MS = 2000;
 export const DEFAULT_RATING = 3;
 
-export const PRESET_CATEGORIES = ['游戏发售','AI模型','硬件发布','软件工具','学术论文','影音作品','生活事件','其他'] as const;
 export const SCHEMA_VERSION = 1;
 
 // ==========================================
@@ -111,7 +107,6 @@ export interface StoreDeps {
 }
 
 export interface FilterState {
-  categories: string[];
   ratings: Rating[];
   minFour: boolean;
   keyword: string;
@@ -119,8 +114,7 @@ export interface FilterState {
 
 export interface ViewState {
   readonly sortOrder: SortOrder;
-  readonly filters: FilterState;          // { categories: string[]; ratings: Rating[]; minFour: boolean; keyword: string }
-  readonly expandedIds: ReadonlySet<string>;
+  readonly filters: FilterState;
   readonly flashId: string | null;
   readonly storageMode: 'persistent' | 'memory';
   readonly capacity: { bytes: number; level: 'ok' | 'warn' | 'block'; remainingImages: number };
@@ -141,13 +135,11 @@ export interface InitResult {
 export interface EventInput {
   date: string;
   title: string;
-  category: string;
 }
 
 export interface EventPatch {
   date?: string;
   title?: string;
-  category?: string;
   cover?: string | null;      // null = 清除封面
   links?: EventLink[];        // 整体替换
 }
@@ -242,7 +234,6 @@ export type IssueCode =
   | 'FIELD_TOO_LONG'
   | 'FIELD_TRUNCATED'
   | 'RATING_CLAMPED'
-  | 'UNKNOWN_CATEGORY_ADDED'
   | 'ID_REGENERATED'
   | 'DUPLICATE_ID_REGENERATED'
   | 'JSON_SYNTAX'
@@ -256,7 +247,6 @@ export type IssueCode =
   | 'BACKUP_FAILED'
   | 'EVENT_NOT_FOUND'
   | 'RECORD_NOT_FOUND'
-  | 'CATEGORY_EXISTS'
   | 'FILE_TOO_LARGE'
   | 'INVALID_FILE_TYPE'
   | 'COVER_TOO_LARGE';
@@ -277,7 +267,6 @@ export const ISSUE_MESSAGES: Record<IssueCode, string> = {
   FIELD_TOO_LONG: '内容超出长度上限',
   FIELD_TRUNCATED: '内容超长，已截断保存',
   RATING_CLAMPED: '星级超出范围，已按边界值保存',
-  UNKNOWN_CATEGORY_ADDED: '已把新分类加入分类字典',
   ID_REGENERATED: '标识缺失，已重新生成',
   DUPLICATE_ID_REGENERATED: '标识重复，已重新生成',
   JSON_SYNTAX: 'JSON 格式错误，无法解析',
@@ -291,7 +280,6 @@ export const ISSUE_MESSAGES: Record<IssueCode, string> = {
   BACKUP_FAILED: '备份失败，已取消覆盖操作',
   EVENT_NOT_FOUND: '事件不存在或已被删除',
   RECORD_NOT_FOUND: '记录不存在或已被删除',
-  CATEGORY_EXISTS: '该分类已存在',
   FILE_TOO_LARGE: '图片过大（超过 10MB），请压缩后再试',
   INVALID_FILE_TYPE: '请选择图片文件',
   COVER_TOO_LARGE: '图片过大，请压缩后上传或改用图片链接',
