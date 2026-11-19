@@ -1,32 +1,17 @@
 /**
- * MOD-010: 年份分组与吸顶标题 (yearGroup.ts)
- * 负责渲染每个年份的分组容器、吸顶标题与该年份下的卡片。
+ * MOD-010: 年份分组与月份小节 (yearGroup.ts)
+ * 负责渲染每个年份的分组容器、吸顶年份标题、月份小节标识与事件行。
  * 严禁使用 innerHTML、严禁自行做业务计算、严禁在此处绑定事件。
  */
 
 import { el } from '../dom';
 import type { YearGroup } from '../../core/select';
-import { renderCard } from './card';
-
-/** 稳定的小哈希：同一事件每次重绘得到同样的“无规则”位置 */
-function hashString(input: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-}
+import { renderEntry } from './entry';
 
 export function renderYearGroup(
   group: YearGroup,
-  expandedIds?: ReadonlySet<string> | ((id: string) => boolean)
+  seqOf: ReadonlyMap<string, number>
 ): HTMLElement {
-  const isExpanded =
-    typeof expandedIds === 'function'
-      ? expandedIds
-      : (id: string) => Boolean(expandedIds?.has(id));
-
   const groupEl = el('section', {
     class: 'htl-year-group',
     'data-year': group.year,
@@ -45,33 +30,13 @@ export function renderYearGroup(
     [headingText]
   );
   groupEl.appendChild(headingEl);
-  // 轴上年份节点（脉动）
-  groupEl.appendChild(
-    el('span', { class: 'htl-axis-node htl-axis-node--year', 'aria-hidden': 'true' })
-  );
 
   const renderCardsInto = (host: HTMLElement, cards: typeof group.cards): void => {
     for (const cardView of cards) {
-      const expanded = isExpanded(cardView.event.id);
-      // 无规则排布：用事件 id 算稳定的伪随机，决定挂上方还是下方、离轴多远、左右留多少
-      const sig = hashString(`${cardView.event.id}|${cardView.event.date}|${cardView.event.title}`);
-      const isUp = sig % 2 === 0;
-      // 窄屏（手机）压缩落差与间距，避免一次只能看到一张卡、上下全是空白
-      const narrow = typeof window !== 'undefined' && window.innerWidth < 720;
-      const lift = narrow ? 16 + (sig % 4) * 9 : 70 + (sig % 6) * 22; // 手机 16..43 / 桌面 70..180
-      const gap = narrow ? 14 + ((sig >> 3) % 3) * 8 : 44 + ((sig >> 3) % 6) * 12; // 手机 14..30 / 桌面 44..104
-      const slot = el('div', {
-        class: `htl-slot ${isUp ? 'is-up' : 'is-down'}`,
-        style: `--lift: ${lift}px; --gap: ${gap}px;`,
-      });
-      const cardEl = renderCard(cardView, expanded);
-      // 位置直接写行内样式，避免被其它 .htl-card 规则覆盖
-      cardEl.style.position = 'absolute';
-      cardEl.style.left = '0';
-      cardEl.style.right = '0';
-      cardEl.style[isUp ? 'bottom' : 'top'] = `calc(50% + ${lift}px)`;
-      slot.appendChild(cardEl);
-      host.appendChild(slot);
+      const seq = seqOf.get(cardView.event.id) ?? 0;
+      const side = seq % 2 === 0 ? 'right' : 'left';
+      const row = renderEntry(cardView, seq, side);
+      host.appendChild(row);
     }
   };
 
@@ -83,8 +48,11 @@ export function renderYearGroup(
     return groupEl;
   }
 
-  // 二级时间轴：年份 → 月份 → 卡片
-  for (const [monthIndex, monthGroup] of months.entries()) {
+  // 二级时间轴：年份 → 月份 → 事件行
+  for (const monthGroup of months) {
+    if (!monthGroup.cards || monthGroup.cards.length === 0) {
+      continue;
+    }
     const monthLabel = monthGroup.month ? `${Number(monthGroup.month)} 月` : '未知月份';
     const monthEl = el('section', {
       class: 'htl-month-group',
@@ -104,13 +72,6 @@ export function renderYearGroup(
         },
         [monthLabel]
       )
-    );
-    monthEl.appendChild(
-      el('span', {
-        class: 'htl-axis-node htl-axis-node--month',
-        'aria-hidden': 'true',
-        style: `--i: ${monthIndex}`,
-      })
     );
     renderCardsInto(monthEl, monthGroup.cards);
     groupEl.appendChild(monthEl);

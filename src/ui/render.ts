@@ -6,14 +6,14 @@
 
 import type { AppState } from '../core/types';
 import { FLASH_DURATION_MS } from '../core/types';
-import type { CardView, YearGroup } from '../core/select';
+import type { YearGroup } from '../core/select';
 import { buildCards } from '../core/select';
 import { el } from './dom';
 import { renderYearGroup } from './parts/yearGroup';
 import { drawAxis } from './parts/axis';
-import { renderCard } from './parts/card';
+import { renderEntry } from './parts/entry';
 
-export { renderCard } from './parts/card';
+export { renderEntry } from './parts/entry';
 export { renderYearGroup } from './parts/yearGroup';
 
 export type FilterBarRenderer = (state: Readonly<AppState>) => void;
@@ -122,7 +122,14 @@ export function render(state: AppState): void {
     root.replaceChildren(emptyContainer);
   } else {
     // 渲染各年份分组
-    const groupElements = groups.map(g => renderYearGroup(g, state.view.expandedIds));
+    const flat = groups.flatMap(g =>
+      Array.isArray(g.months) && g.months.length > 0
+        ? g.months.flatMap(m => m.cards)
+        : g.cards
+    );
+    const seqOf = new Map<string, number>();
+    flat.forEach((v, i) => seqOf.set(v.event.id, i));
+    const groupElements = groups.map(g => renderYearGroup(g, seqOf));
     root.replaceChildren(...groupElements);
   }
 
