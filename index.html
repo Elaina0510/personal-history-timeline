@@ -3,15 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f40c3f" />
     <title>个人历史时间轴</title>
-    <script type="module" crossorigin src="./assets/index-Dgp9rFnj.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-Cll-rhrI.css">
+    <script type="module" crossorigin src="./assets/index-Cxvgha_S.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DxMT3JDu.css">
   </head>
   <body>
+    <header class="htl-masthead">
+      <div class="htl-masthead__brand">
+        <span class="htl-masthead__mark" aria-hidden="true"></span>
+        <span class="htl-masthead__name">PERSONAL ARCHIVE</span>
+        <span class="htl-masthead__sep" aria-hidden="true">/</span>
+        <span class="htl-masthead__sub">记录存档 · VOL.01</span>
+      </div>
+      <div class="htl-masthead__cells">
+        <span class="htl-masthead__cell">LOCAL ONLY</span>
+        <span class="htl-masthead__cell">全部数据存于本机</span>
+        <button type="button" class="htl-masthead__cell htl-masthead__top" data-action="scroll-top">↑ TOP</button>
+      </div>
+    </header>
+
+    <section class="htl-hero" aria-labelledby="hero-title">
+      <p class="htl-hero__strip" aria-hidden="true">01001000 01001001 01010011 01010100 01001111 01010010 01011001 00101111 00100000 01010000 01000101 01010010 01010011 01001111 01001110 01000001 01001100 00100000 01010100 01001001 01001101 01000101 01001100 01001001 01001110 01000101 00101111 00100000 01010110 01001111 01001100 00101110 00110000 00110001 00101111 00100000 01000001 01010010 01000011 01001000 01001001 01010110 01000101</p>
+      <div class="htl-hero__body">
+        <p class="htl-hero__kicker">PERSONAL HISTORY — 时间轴</p>
+        <h1 class="htl-hero__title" id="hero-title">
+          <span class="htl-hero__line">个人历史时间轴</span><em class="htl-hero__star" aria-hidden="true">✦</em>
+        </h1>
+        <p class="htl-hero__desc">把发生过的事、留下的图、当时的心情，一条一条钉在时间上。</p>
+      </div>
+      <dl class="htl-hero__stats">
+        <div class="htl-hero__stat"><dt>EVENTS</dt><dd id="hs-events">—</dd></div>
+        <div class="htl-hero__stat"><dt>SPAN</dt><dd id="hs-span">—</dd></div>
+        <div class="htl-hero__stat"><dt>RECORDS</dt><dd id="hs-records">—</dd></div>
+        <div class="htl-hero__stat"><dt>STATUS</dt><dd>LOCAL</dd></div>
+      </dl>
+    </section>
+
     <div id="toolbar"></div>
     <div id="filter-bar"></div>
     <nav id="year-nav"></nav>
     <div id="timeline-root"></div>
     <div id="overlay-root"></div>
+
+    <footer class="htl-foot">
+      <span>PERSONAL HISTORY TIMELINE</span>
+      <span>ARCHIVE / LOCAL STORAGE</span>
+      <span aria-hidden="true">✦</span>
+    </footer>
   </body>
 </html>
