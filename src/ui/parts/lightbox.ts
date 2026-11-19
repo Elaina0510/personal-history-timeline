@@ -2,11 +2,12 @@
  * MOD-017 浮层三件套之三：大图灯箱
  * 挂载于 #overlay-root，永不参与 #timeline-root 重绘。
  * - Esc 与遮罩点击关闭
- * - 打开时给 document.body 加 .is-locked（CSS 中 overflow: hidden），关闭时移除
+ * - 打开时通过 scrollLock 锁定滚动，关闭时解锁
  * - 图片 object-fit: contain
  */
 
 import { el } from '../dom';
+import { lockScroll, unlockScroll } from './scrollLock';
 
 let currentLightbox: HTMLElement | null = null;
 let keydownListener: ((ev: KeyboardEvent) => void) | null = null;
@@ -27,7 +28,7 @@ export function closeLightbox(): void {
     keydownListener = null;
   }
 
-  document.body.classList.remove('is-locked');
+  unlockScroll();
 
   if (currentLightbox && currentLightbox.parentNode) {
     currentLightbox.parentNode.removeChild(currentLightbox);
@@ -78,7 +79,7 @@ export function openLightbox(src: string, alt?: string): void {
   document.addEventListener('keydown', keydownListener, true);
 
   // 打开时锁定 body 滚动
-  document.body.classList.add('is-locked');
+  lockScroll();
 
   overlayRoot.appendChild(lightboxEl);
   currentLightbox = lightboxEl;
