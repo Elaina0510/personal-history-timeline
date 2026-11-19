@@ -636,7 +636,7 @@ body.is-past-hero .htl-year-nav {
 .htl-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--htl-axis-col, 148px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--htl-axis-col, 240px) minmax(0, 1fr);
   column-gap: var(--htl-entry-gap, 20px);
   align-items: center;
   padding: 14px 0;
@@ -698,7 +698,7 @@ body.is-past-hero .htl-year-nav {
   pointer-events: none;
   /* 压过吸顶年份条，折线不会在年份处断掉；只放行轴列那一条竖带，免得压到文字 */
   z-index: 15;
-  clip-path: inset(0 calc(50% - var(--htl-axis-col, 148px) / 2) 0 calc(50% - var(--htl-axis-col, 148px) / 2));
+  clip-path: inset(0 calc(50% - var(--htl-axis-col, 240px) / 2) 0 calc(50% - var(--htl-axis-col, 240px) / 2));
 }
 
 .htl-axis-path {
@@ -720,7 +720,7 @@ body.is-past-hero .htl-year-nav {
 }
 
 .htl-row.is-amp-wide {
-  --htl-node-scale: 1.28;
+  --htl-node-scale: 1.3;
 }
 
 .htl-row.is-amp-mid {
@@ -728,7 +728,7 @@ body.is-past-hero .htl-year-nav {
 }
 
 .htl-row.is-amp-tight {
-  --htl-node-scale: 0.6;
+  --htl-node-scale: 0.62;
 }
 
 .htl-node {
@@ -741,7 +741,7 @@ body.is-past-hero .htl-year-nav {
   background: var(--htl-color-accent, #f40c3f);
   box-shadow: 0 0 0 3px var(--htl-color-bg, #0b0b0c);
   z-index: 2;
-  transform: translateX(calc(var(--htl-axis-wave, 56px) * var(--htl-node-dir, 1) * var(--htl-node-scale, 1)));
+  transform: translateX(calc(var(--htl-axis-wave, 88px) * var(--htl-node-dir, 1) * var(--htl-node-scale, 1)));
   transition: background-color var(--htl-transition-fast, 120ms ease),
     box-shadow var(--htl-transition-fast, 120ms ease);
 }
@@ -1345,8 +1345,8 @@ body.is-locked,
 @media (max-width: 767.98px) {
   :root,
   .htl-timeline {
-    --htl-axis-col: 40px;
-    --htl-axis-wave: 13px;
+    --htl-axis-col: 60px;
+    --htl-axis-wave: 18px;
     --htl-entry-gap: 12px;
     --htl-title-fs: 15px;
     --htl-gutter: 18px;
@@ -1396,7 +1396,7 @@ body.is-locked,
 
   /* 移动端：轴贴左，条目统一靠右，不左右交替 */
   .htl-row {
-    grid-template-columns: var(--htl-axis-col, 40px) minmax(0, 1fr);
+    grid-template-columns: var(--htl-axis-col, 60px) minmax(0, 1fr);
     column-gap: var(--htl-entry-gap, 12px);
     padding: 14px 0;
   }
@@ -1421,11 +1421,11 @@ body.is-locked,
   }
 
   .htl-month-heading::after {
-    left: calc(var(--htl-axis-col, 40px) / 2 - 2.5px);
+    left: calc(var(--htl-axis-col, 60px) / 2 - 2.5px);
   }
 
   .htl-axis-svg {
-    clip-path: inset(0 calc(100% - var(--htl-axis-col, 40px)) 0 0);
+    clip-path: inset(0 calc(100% - var(--htl-axis-col, 60px)) 0 0);
   }
 
   .htl-entry__title {

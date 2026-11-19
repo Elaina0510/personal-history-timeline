@@ -69,8 +69,8 @@
   --htl-hairline: 1px;
   --htl-timeline-width: 1px;
   --htl-timeline-max-width: 1120px;
-  --htl-axis-col: 148px;
-  --htl-axis-wave: 56px;
+  --htl-axis-col: 240px;
+  --htl-axis-wave: 88px;
   --htl-entry-gap: 20px;
   --htl-title-fs: clamp(15px, 1.15vw, 19px);
   --htl-date-col: 0px;
