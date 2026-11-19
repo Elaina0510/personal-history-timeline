@@ -637,7 +637,7 @@ body.is-past-hero .htl-year-nav {
 .htl-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--htl-axis-col, 96px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--htl-axis-col, 148px) minmax(0, 1fr);
   column-gap: var(--htl-entry-gap, 20px);
   align-items: center;
   padding: 14px 0;
@@ -691,7 +691,9 @@ body.is-past-hero .htl-year-nav {
   left: 0;
   overflow: visible;
   pointer-events: none;
-  z-index: 0;
+  /* 压过吸顶年份条，折线不会在年份处断掉；只放行轴列那一条竖带，免得压到文字 */
+  z-index: 15;
+  clip-path: inset(0 calc(50% - var(--htl-axis-col, 148px) / 2) 0 calc(50% - var(--htl-axis-col, 148px) / 2));
 }
 
 .htl-axis-path {
@@ -712,8 +714,16 @@ body.is-past-hero .htl-year-nav {
   --htl-node-dir: -1;
 }
 
-.htl-row:nth-child(3n) {
-  --htl-node-scale: 0.55;
+.htl-row.is-amp-wide {
+  --htl-node-scale: 1.28;
+}
+
+.htl-row.is-amp-mid {
+  --htl-node-scale: 1;
+}
+
+.htl-row.is-amp-tight {
+  --htl-node-scale: 0.6;
 }
 
 .htl-node {
@@ -726,7 +736,7 @@ body.is-past-hero .htl-year-nav {
   background: var(--htl-color-accent, #f40c3f);
   box-shadow: 0 0 0 3px var(--htl-color-bg, #0b0b0c);
   z-index: 2;
-  transform: translateX(calc(var(--htl-axis-wave, 30px) * var(--htl-node-dir, 1) * var(--htl-node-scale, 1)));
+  transform: translateX(calc(var(--htl-axis-wave, 56px) * var(--htl-node-dir, 1) * var(--htl-node-scale, 1)));
   transition: background-color var(--htl-transition-fast, 120ms ease),
     box-shadow var(--htl-transition-fast, 120ms ease);
 }
@@ -1331,7 +1341,7 @@ body.is-locked,
   :root,
   .htl-timeline {
     --htl-axis-col: 40px;
-    --htl-axis-wave: 9px;
+    --htl-axis-wave: 13px;
     --htl-entry-gap: 12px;
     --htl-title-fs: 15px;
     --htl-gutter: 18px;
@@ -1407,6 +1417,10 @@ body.is-locked,
 
   .htl-month-heading::after {
     left: calc(var(--htl-axis-col, 40px) / 2 - 2.5px);
+  }
+
+  .htl-axis-svg {
+    clip-path: inset(0 calc(100% - var(--htl-axis-col, 40px)) 0 0);
   }
 
   .htl-entry__title {

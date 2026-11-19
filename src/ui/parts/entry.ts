@@ -50,10 +50,14 @@ export function renderEntry(
   const nodeEl = el('span', { class: 'htl-node', 'aria-hidden': 'true' });
   const axisCell = el('div', { class: 'htl-cell--axis' }, [nodeEl]);
 
+  // 摆幅按序号轮换，折线不是等幅锯齿
+  const ampClass =
+    seq % 3 === 0 ? 'is-amp-wide' : seq % 3 === 1 ? 'is-amp-mid' : 'is-amp-tight';
+
   return el(
     'div',
     {
-      class: `htl-row ${sideClass}`,
+      class: `htl-row ${sideClass} ${ampClass}`,
       'data-event-id': event.id,
       'data-seq': String(seq),
     },
