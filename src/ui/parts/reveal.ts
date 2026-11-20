@@ -13,7 +13,7 @@
 const ARMED_CLASS = 'is-reveal-armed';
 const ROW_SELECTOR = '.htl-row';
 const REVEALED_CLASS = 'is-revealed';
-const DELAY_STEP_MS = 80;
+const DELAY_STEP_MS = 100;
 const DELAY_MAX_STEPS = 5;
 
 /** 已经露出过的事件 id —— 重绘后这些行不再走动画 */
