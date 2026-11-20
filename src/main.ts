@@ -17,6 +17,7 @@ import { mountCapacityBar } from './ui/parts/capacityBar';
 import { mountBackdrop } from './ui/parts/backdrop';
 import { initOverlayHistory, pushOverlayEntry } from './ui/parts/overlayHistory';
 import { openSyncPanel } from './ui/parts/syncPanel';
+import { probeApiMode, unlockGate } from './ui/gate';
 import { SyncService } from './ui/sync';
 import { isConfigReady } from './core/sync';
 import type { AppState } from './core/types';
@@ -136,6 +137,12 @@ document.addEventListener('keydown', (e) => {
 });
 async function init(): Promise<void> {
   const storage = createStorage(), clock = createClock();
+  // 带同步后端的部署（Cloudflare Worker）先过门禁：没有有效口令就停在锁屏，不给看也不给改
+  const probe = await probeApiMode();
+  if (probe.mode === 'api') {
+    const unlocked = await unlockGate(storage);
+    if (!unlocked) return;
+  }
   store = new Store({ storage, clock, appVersion: '0.0.3' });
   setFormStore(store); setFilterStore(store); setImportStore(store);
   (window as unknown as { __htl_store?: Store }).__htl_store = store;

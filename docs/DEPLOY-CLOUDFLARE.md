@@ -39,6 +39,15 @@ npm run cf:deploy    # wrangler deploy
 
 ## 在设备上打开同步
 
+### 门禁（只在这一份 Worker 部署上生效）
+
+打开 `https://personal-history-timeline.whitemaskluo.workers.dev` 会先要口令：
+
+- 探测 `/api/health` 认到自己的后端 → 上锁；没有有效口令就停在锁屏，不给看也不给改。
+- 口令验证是真的发一次 `GET /api/data`，2xx 才算过，错了会原地报错。
+- 通过后写进本机 localStorage（`timeline_sync_v1`，endpoint `/api`、auto 开），下次直接进站并自动同步。
+- GitHub Pages 那份没有 `/api`，探测失败 → 不上锁，行为跟以前一样（展示 + 本地数据）。
+
 页面工具栏点「同步」：
 
 - 服务地址：部署在自己 Worker 上时填 `/api`；从 GitHub Pages 打开时填
