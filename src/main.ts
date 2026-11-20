@@ -16,6 +16,9 @@ import { renderToolbar } from './ui/parts/toolbar';
 import { mountCapacityBar } from './ui/parts/capacityBar';
 import { mountBackdrop } from './ui/parts/backdrop';
 import { initOverlayHistory, pushOverlayEntry } from './ui/parts/overlayHistory';
+import { openSyncPanel } from './ui/parts/syncPanel';
+import { SyncService } from './ui/sync';
+import { isConfigReady } from './core/sync';
 import type { AppState } from './core/types';
 
 /** 首屏报头统计：只做纯展示聚合，不参与业务判定 */
@@ -44,6 +47,9 @@ function updateHeroStats(s: AppState): void {
   recordsEl.textContent = String(records).padStart(2, '0');
 }
 let store: Store;
+let syncService: SyncService | null = null;
+/** 自动同步：只在数据文本真的变了才排一次推送，避免筛选等视图变更也触发 */
+let syncDebounce: number | null = null;
 /** 首屏拿到的种子原文，重置按钮复用（不重新联网取，离线也能重置） */
 let seedSnapshot: string | null = null;
 async function handler(action: string, id: string | undefined, ev: Event): Promise<void> {
@@ -95,6 +101,7 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
     }
     case 'jump-year': if (id) scrollToYear(id); break;
     case 'scroll-top': scrollToTop(); break;
+    case 'open-sync': if (syncService) openSyncPanel(syncService); break;
     case 'open-import': openImportModal(); break;
     case 'open-export': openExportModal(); break;
     case 'restore-backup': openRestoreBackupConfirm(); break;
@@ -135,10 +142,35 @@ async function init(): Promise<void> {
   const seedRaw = await loadSeedRaw();
   seedSnapshot = seedRaw;
   const res = store.init(seedRaw);
+  syncService = new SyncService({ store, storage, clock });
+  const sync = syncService;
+  let lastDataText = store.exportJson();
   store.subscribe((s) => {
     render(s);
     refreshDetail(s);
     updateHeroStats(s);
+
+    // 自动推送：只在数据真的变了、且确实与云端不一致时排一次
+    const text = store.exportJson();
+    if (text === lastDataText) return;
+    lastDataText = text;
+    const cfg = sync.getConfig();
+    if (!cfg.auto || !isConfigReady(cfg)) return;
+    if (syncDebounce !== null) window.clearTimeout(syncDebounce);
+    syncDebounce = window.setTimeout(() => {
+      syncDebounce = null;
+      if (!sync.status().dirty) return;
+      void sync.push(false).then((r) => {
+        if (!r.ok) {
+          toast(
+            r.kind === 'conflict'
+              ? '云端有更新的版本，打开「同步」处理冲突'
+              : `自动同步失败：${r.message}`,
+            'error'
+          );
+        }
+      });
+    }, 1500);
   });
   render(store.getState());
   updateHeroStats(store.getState());
@@ -146,6 +178,32 @@ async function init(): Promise<void> {
   mountCapacityBar(store);
   mountBackdrop();
   bindActions(handler);
+
+  // 启动即同步：这台设备没同步过就先拉云端（云端优先，别拿种子覆盖老数据）；
+  // 同步过且有本地改动就推上去；否则拉一次看别的设备有没有新东西。
+  void (async () => {
+    const cfg = sync.getConfig();
+    if (!cfg.auto || !isConfigReady(cfg)) return;
+    const st = sync.status();
+    if (st.lastSyncedAt === null) {
+      const pulled = await sync.pull();
+      if (pulled.ok && pulled.applied) {
+        toast('已拉取云端数据');
+      } else if (pulled.ok && !pulled.applied) {
+        await sync.push(false);
+      }
+      return;
+    }
+    if (st.dirty) {
+      const pushed = await sync.push(false);
+      if (!pushed.ok && pushed.kind === 'conflict') {
+        toast('云端有更新的版本，打开「同步」处理冲突', 'error');
+      }
+      return;
+    }
+    const pulled = await sync.pull();
+    if (pulled.ok && pulled.applied) toast('已同步云端更新');
+  })();
 
   // 浏览器/手机返回键：先关最上层浮层，不要直接退出页面
   initOverlayHistory(() => {

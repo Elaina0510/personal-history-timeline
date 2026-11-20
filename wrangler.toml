@@ -1,0 +1,26 @@
+# Cloudflare Worker 部署配置：同一个 Worker 提供静态站点 + 同步 API
+#
+# 首次部署前要做的三件事（详见 docs/DEPLOY-CLOUDFLARE.md）：
+#   1. wrangler login
+#   2. wrangler kv namespace create TIMELINE_KV   → 把返回的 id 填到下面
+#   3. wrangler secret put SYNC_TOKEN             → 输入你的同步口令
+# 然后 npm run cf:deploy
+
+name = "personal-history-timeline"
+main = "worker/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+# /api/* 必须先过 Worker，否则会被 SPA 回退成 index.html
+run_worker_first = ["/api/*"]
+
+[[kv_namespaces]]
+binding = "TIMELINE_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[observability]
+enabled = true

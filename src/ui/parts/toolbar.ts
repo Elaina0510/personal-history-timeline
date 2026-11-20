@@ -17,6 +17,7 @@ interface ToolbarItem {
 
 const ITEMS: ToolbarItem[] = [
   { action: 'new-event', label: '+ 新建事件', title: '新建一条事件（快捷键：无）' },
+  { action: 'open-sync', label: '同步', title: '云端同步：多台设备共用同一份数据' },
   { action: 'open-import', label: '导入', title: '从 JSON 文件或粘贴导入' },
   { action: 'open-export', label: '导出', title: '下载或复制全部数据' },
   { action: 'reset-seed', label: '重置为示例', title: '清空本地数据并重新载入随应用发布的示例事件' },

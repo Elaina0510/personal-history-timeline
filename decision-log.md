@@ -132,3 +132,37 @@
 - Safari 隐私模式的抛错位置可能在 `read` 而非 `write`，两处都要 try/catch。
 - 300 条 + 20 张远程图时重绘耗时；若 >100ms，先做「只重建受影响年份组」，不要上虚拟滚动。
 - `public/data/events.json` 的 2 条示例种子内容。
+
+---
+
+## 多端同步（Cloudflare）阶段
+
+产出：`worker/index.js`（静态资源 + 同步 API 同一个 Worker）、`src/core/sync.ts`（纯逻辑）、
+`src/ui/sync.ts`（浏览器实现）、`src/ui/parts/syncPanel.ts`（同步面板）、`scripts/dev-sync.mjs`（本地联调）、
+`docs/DEPLOY-CLOUDFLARE.md`。
+
+### 技术决策
+
+| 决策点 | 结论 | 理由 |
+|--------|------|------|
+| 托管形态 | 一个 Worker 同时吐静态文件与 `/api/*` | 同源，不用跨域 cookie；一次部署只维护一个地址 |
+| 云端存储 | Workers KV 单 key 存整份快照 | 数据是「一份 JSON」，KV 单值 25MB 足够；D1 要建表反而多余 |
+| 鉴权 | 单一共享口令，Worker secret 持有，前端只存本机 | 单人自用，够；口令不进代码、不进仓库 |
+| 并发 | 乐观锁 `baseRevision`，不符返回 409 并回传云端快照 | 静默 last-write-wins 会真丢记录，冲突必须由人决定 |
+| 冲突兜底 | 面板里「用云端覆盖本地」/「用本地覆盖云端」 | 两个动作都显式，且覆盖前 applyImport 自带备份 |
+| 启动策略 | 这台设备没同步过 → 先拉；同步过且有改动 → 推；否则拉 | 新设备直接推会把云端老数据冲掉，反过来才对 |
+| 自动推送 | 数据文本变化后 debounce 1.5s，且 `dirty` 才推 | 筛选/排序等视图变更不该产生版本 |
+
+### 被否的备选
+
+- **GitHub Pages 做同步**：静态托管只有 GET，物理上没有写入口。
+- **轮询式 last-write-wins**：并发编辑丢数据，且丢得无声无息。
+- **Cloudflare Pages + Pages Functions**：能用，但要维护两套部署产物；Worker + Static Assets 一份就够。
+
+### 验证
+
+- `npm test`：168 passed（新增 `tests/worker.spec.ts` 12 条、`tests/sync.spec.ts` 14 条，
+  后者把浏览器端 `fetch` 直接接到真 Worker 上，无网络但代码是同一份）。
+- 本地联调实测（`scripts/dev-sync.mjs` + 真浏览器）：设备 A 推送 → v1；A 新建事件 → 自动推 → v2；
+  设备 B 清空 localStorage 后只填配置 → 自动拉到 19 条；第三方推 v3 后 B 本地改动推送得 409 →
+  面板选「用云端覆盖本地」→ 数据换成云端 20 条、meta 回到 v3。
