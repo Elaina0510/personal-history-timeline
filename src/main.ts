@@ -42,6 +42,8 @@ function updateHeroStats(s: AppState): void {
   recordsEl.textContent = String(records).padStart(2, '0');
 }
 let store: Store;
+/** 首屏拿到的种子原文，重置按钮复用（不重新联网取，离线也能重置） */
+let seedSnapshot: string | null = null;
 async function handler(action: string, id: string | undefined, ev: Event): Promise<void> {
   const events = store.getState().data.events;
   switch (action) {
@@ -82,6 +84,25 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
     case 'open-import': openImportModal(); break;
     case 'open-export': openExportModal(); break;
     case 'restore-backup': openRestoreBackupConfirm(); break;
+    case 'reset-seed': {
+      if (await confirmDialog({
+        title: '重置为示例数据',
+        message: '将清空当前全部事件与记录，并重新载入随应用发布的示例事件。此操作不可撤销，建议先导出备份。',
+        confirmText: '确认重置',
+        danger: true,
+      })) {
+        const r = store.reloadFromSeed(seedSnapshot);
+        if (!r.ok) {
+          toast('重置失败：示例数据无效', 'error');
+        } else if (!r.value.seeded) {
+          toast('示例数据不可用，未做改动', 'warn');
+        } else {
+          closeDetail();
+          toast('已重置为示例数据', 'success');
+        }
+      }
+      break;
+    }
     default: handleFilterAction(action, id, ev); break;
   }
 }
@@ -98,6 +119,7 @@ async function init(): Promise<void> {
   setFormStore(store); setFilterStore(store); setImportStore(store);
   (window as unknown as { __htl_store?: Store }).__htl_store = store;
   const seedRaw = await loadSeedRaw();
+  seedSnapshot = seedRaw;
   const res = store.init(seedRaw);
   store.subscribe((s) => {
     render(s);
