@@ -30,6 +30,13 @@ npm run cf:deploy    # wrangler deploy
 
 部署完地址形如 `https://personal-history-timeline.<你的子域>.workers.dev`。
 
+当前实例（2026-11-21 部署）：
+
+- 站点 / 同步地址：`https://personal-history-timeline.whitemaskluo.workers.dev`
+- KV namespace：`TIMELINE_KV` = `cf6669fcfee1411a8f70339acf721d28`
+- 同步口令：`wrangler secret put SYNC_TOKEN` 已设，值在 `H:/application/hermes/cache/scratch/sync-token.txt`
+  （不在仓库里；换口令就重跑一次 `npm run cf:secret`，再在各设备面板里改）
+
 ## 在设备上打开同步
 
 页面工具栏点「同步」：
