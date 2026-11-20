@@ -15,6 +15,7 @@
 
 import { el } from '../dom';
 import { lockScroll, unlockScroll } from './scrollLock';
+import { dropOverlayEntry, pushOverlayEntry } from './overlayHistory';
 import { toast } from './toast';
 import { buildCards, sortedRecords } from '../../core/select';
 import type { CardView } from '../../core/select';
@@ -282,6 +283,8 @@ export function openDetail(eventId: string, store: Store): void {
 
   lockScroll();
   overlayRoot.appendChild(modalEl);
+  // 压一条历史记录：手机上按返回先关浮层，而不是退出整个页面
+  pushOverlayEntry();
 }
 
 export function closeDetail(): void {
@@ -301,6 +304,7 @@ export function closeDetail(): void {
   lastPanelScrollTop = 0;
 
   unlockScroll();
+  dropOverlayEntry();
 }
 
 export function refreshDetail(state: Readonly<AppState>): void {

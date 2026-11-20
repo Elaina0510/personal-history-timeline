@@ -47,6 +47,7 @@ import { compressImage } from '../platform';
 import { toast } from './toast';
 import { confirmDialog } from './confirm';
 import { lockScroll, unlockScroll } from './scrollLock';
+import { dropOverlayEntry, pushOverlayEntry } from './overlayHistory';
 
 let activeStore: Store | null = null;
 let activeModal: HTMLElement | null = null;
@@ -101,11 +102,15 @@ export function closeFormModal(force?: boolean): void {
       activeKeydownListener = null;
     }
     unlockScroll();
+    const hadModal = activeModal !== null;
     if (activeModal && activeModal.parentNode) {
       activeModal.parentNode.removeChild(activeModal);
     }
     activeModal = null;
     activeAttemptClose = null;
+    if (hadModal) {
+      dropOverlayEntry();
+    }
   } else {
     if (activeAttemptClose) {
       activeAttemptClose();
@@ -1119,6 +1124,7 @@ export function openEventForm(
 
   lockScroll();
   overlayRoot.appendChild(modalEl);
+  pushOverlayEntry();
 
   // 默认聚焦标题输入框（若无标题则聚焦标题，若新建且日期为空可聚焦日期）
   titleInput.focus();
@@ -1698,6 +1704,7 @@ export function openRecordForm(
 
   lockScroll();
   overlayRoot.appendChild(modalEl);
+  pushOverlayEntry();
 
   summaryInput.focus();
 }

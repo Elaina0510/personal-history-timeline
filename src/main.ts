@@ -7,13 +7,14 @@ import { el } from './ui/dom';
 import { buildRelationIndex } from './core/select';
 import { toast } from './ui/parts/toast'; import { confirmDialog } from './ui/parts/confirm';
 import { openLightbox, closeLightbox } from './ui/parts/lightbox';
-import { openDetail, closeDetail, refreshDetail } from './ui/parts/detailModal';
+import { openDetail, closeDetail, refreshDetail, isDetailOpen } from './ui/parts/detailModal';
 import { scrollToYear, scrollToTop } from './ui/parts/yearNav';
 import { openEventForm, openRecordForm, closeFormModal, setStore as setFormStore } from './ui/parts/formModal';
 import { handleFilterAction, setStore as setFilterStore } from './ui/parts/filterBar';
 import { openImportModal, openExportModal, openRestoreBackupConfirm, setStore as setImportStore } from './ui/parts/importExport';
 import { renderToolbar } from './ui/parts/toolbar';
 import { mountCapacityBar } from './ui/parts/capacityBar';
+import { initOverlayHistory, pushOverlayEntry } from './ui/parts/overlayHistory';
 import type { AppState } from './core/types';
 
 /** 首屏报头统计：只做纯展示聚合，不参与业务判定 */
@@ -131,6 +132,28 @@ async function init(): Promise<void> {
   renderToolbar();
   mountCapacityBar(store);
   bindActions(handler);
+
+  // 浏览器/手机返回键：先关最上层浮层，不要直接退出页面
+  initOverlayHistory(() => {
+    if (document.querySelector('.htl-lightbox')) {
+      closeLightbox();
+      return true;
+    }
+    if (document.querySelector('.htl-modal')) {
+      closeFormModal();
+      if (document.querySelector('.htl-modal')) {
+        // 有脏改被二次确认拦住：把历史记录补回来，免得返回键一路退出去
+        pushOverlayEntry();
+        return false;
+      }
+      return true;
+    }
+    if (isDetailOpen()) {
+      closeDetail();
+      return true;
+    }
+    return false;
+  });
 
   // 首屏红色区内隐藏右侧年份索引，滚过首屏后淡入（纯视觉，不涉及状态）
   const heroEl = document.querySelector<HTMLElement>('.htl-hero');

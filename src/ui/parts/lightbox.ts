@@ -8,6 +8,7 @@
 
 import { el } from '../dom';
 import { lockScroll, unlockScroll } from './scrollLock';
+import { dropOverlayEntry, pushOverlayEntry } from './overlayHistory';
 
 let currentLightbox: HTMLElement | null = null;
 let keydownListener: ((ev: KeyboardEvent) => void) | null = null;
@@ -30,10 +31,15 @@ export function closeLightbox(): void {
 
   unlockScroll();
 
+  const hadLightbox = currentLightbox !== null;
   if (currentLightbox && currentLightbox.parentNode) {
     currentLightbox.parentNode.removeChild(currentLightbox);
   }
   currentLightbox = null;
+
+  if (hadLightbox) {
+    dropOverlayEntry();
+  }
 }
 
 export function openLightbox(src: string, alt?: string): void {
@@ -83,4 +89,5 @@ export function openLightbox(src: string, alt?: string): void {
 
   overlayRoot.appendChild(lightboxEl);
   currentLightbox = lightboxEl;
+  pushOverlayEntry();
 }
