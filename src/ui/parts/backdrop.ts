@@ -15,12 +15,10 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 消失点基准高度（viewBox 百分比） */
 const HORIZON = 20;
 /** 底部竖线间距（百分比），画到视口外一点避免两侧留空 */
-const COLUMN_STEP = 11;
+const COLUMN_STEP = 20;
 const COLUMN_MIN = -170;
 const COLUMN_MAX = 270;
-/** 消失点左右摆幅（百分比） */
-const DRIFT_X = 12;
-/** 消失点上下摆幅（百分比） */
+/** 消失点上下摆幅（百分比）；水平方向始终钉在中轴 x=50，不许横跳 */
 const DRIFT_Y = 5;
 /** 滚动多少像素走完一个漂移周期 */
 const DRIFT_PERIOD_PX = 2600;
@@ -48,14 +46,12 @@ function makeLine(
   return line;
 }
 
-/** 只改竖线的起点：消失点随滚动缓慢漂移，底部端点不动 */
+/** 只改竖线的起点高度：消失点始终在中轴，只做轻微上下浮动 */
 function paint(): void {
   rafId = 0;
   const angle = ((window.scrollY || 0) / DRIFT_PERIOD_PX) * Math.PI * 2;
-  const x = (50 + DRIFT_X * Math.sin(angle)).toFixed(2);
   const y = (HORIZON + DRIFT_Y * Math.cos(angle)).toFixed(2);
   for (const line of columnEls) {
-    line.setAttribute('x1', x);
     line.setAttribute('y1', y);
   }
 }

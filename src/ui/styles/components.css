@@ -408,6 +408,8 @@ select:focus {
  * -------------------------------------------------------------------------- */
 #toolbar {
   padding: var(--htl-space-5, 24px) var(--htl-gutter, 32px) 0;
+  /* 整块操作区不透明：透视背景线不该从按钮缝隙里穿出来 */
+  background-color: var(--htl-color-bg, #0b0b0c);
 }
 
 .htl-toolbar {
