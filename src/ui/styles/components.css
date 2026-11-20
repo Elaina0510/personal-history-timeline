@@ -644,6 +644,33 @@ body.is-past-hero .htl-year-nav {
   isolation: isolate;
 }
 
+/* 滚动入场：条目文字从下方浮起 + 整行淡入（由 reveal.ts 加 .is-revealed）
+ * 位移只加在条目格上，轴节点必须纹丝不动 —— 折线是拿 .htl-node 的 rect 量的。
+ * 隐藏态只挂在 .is-reveal-armed 之下，JS 未执行时内容照常可见。 */
+.htl-timeline.is-reveal-armed .htl-row {
+  transition: opacity 480ms ease-out;
+  transition-delay: var(--htl-reveal-delay, 0ms);
+}
+
+.htl-timeline.is-reveal-armed .htl-row:not(.is-revealed) {
+  opacity: 0;
+}
+
+.htl-timeline.is-reveal-armed .htl-cell--entry {
+  transition: transform 720ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: var(--htl-reveal-delay, 0ms);
+}
+
+.htl-timeline.is-reveal-armed .htl-row:not(.is-revealed) .htl-cell--entry {
+  transform: translateY(24px);
+  will-change: transform;
+}
+
+.htl-timeline.is-reveal-armed .htl-row.is-revealed .htl-cell--entry {
+  transform: translateY(0);
+}
+
+
 /* 年份条 / 月份标签下面不再补一条线，下面第一条事件行直接贴上去 */
 .htl-month-group > .htl-row:first-of-type,
 .htl-year-group > .htl-row:first-of-type {
@@ -864,11 +891,12 @@ body.is-past-hero .htl-year-nav {
   inset: 0;
   z-index: var(--htl-z-modal, 100);
   background: var(--htl-color-overlay, rgba(7, 7, 8, 0.88));
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--htl-space-5, 24px);
+  animation: htl-veil-in 220ms ease-out both;
 }
 
 .htl-detail__panel {
@@ -881,6 +909,28 @@ body.is-past-hero .htl-year-nav {
   box-shadow: 10px 10px 0 var(--htl-color-accent, #f40c3f);
   padding: 0;
   box-sizing: border-box;
+  animation: htl-panel-rise 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+/* 浮窗出现：遮罩淡入 + 面板自下浮起，别让点开详情像换了个页面 */
+@keyframes htl-veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes htl-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .htl-detail__head {
@@ -1337,6 +1387,19 @@ body.is-locked,
   body {
     scroll-behavior: auto !important;
   }
+
+  /* 入场动画降级：直接显示，不保留任何隐藏/位移态 */
+  .htl-timeline .htl-row,
+  .htl-timeline .htl-cell--entry {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .htl-detail,
+  .htl-detail__panel {
+    animation: none !important;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1409,16 +1472,20 @@ body.is-locked,
     display: none;
   }
 
+  /* 详情改成真正的浮窗：四边留空、背景透出来，不再是一整屏「新页面」 */
   .htl-detail {
-    padding: 0;
+    padding: 12px;
+    background: rgba(7, 7, 8, 0.74);
   }
 
   .htl-detail__panel {
-    width: 100vw;
-    max-height: 100vh;
-    height: 100vh;
-    box-shadow: none;
-    border: 0;
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    height: auto;
+    box-shadow: 6px 6px 0 var(--htl-color-accent, #f40c3f);
+    border: var(--htl-hairline, 1px) solid var(--htl-color-hairline-strong, rgba(242, 239, 230, 0.42));
   }
 
   .htl-modal {

@@ -11,6 +11,7 @@ import { buildCards } from '../core/select';
 import { el } from './dom';
 import { renderYearGroup } from './parts/yearGroup';
 import { drawAxis } from './parts/axis';
+import { mountReveal } from './parts/reveal';
 
 export { renderEntry } from './parts/entry';
 export { renderYearGroup } from './parts/yearGroup';
@@ -204,6 +205,9 @@ export function render(state: AppState): void {
   } catch {
     // 主轴是纯视觉层，失败不影响功能
   }
+
+  // 6.6 条目入场：滚动到视口内的行才上浮淡入（纯视觉，失败不影响内容可见）
+  mountReveal(root);
 
   // 7. 应用 flashId 高亮并在 FLASH_DURATION_MS 后移除（§6.4）
   if (state.view.flashId) {
