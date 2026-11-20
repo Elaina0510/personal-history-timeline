@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "appVersion": "0.0.2",
-  "savedAt": "2026-11-18T12:00:00+08:00",
+  "savedAt": "2026-11-20T23:10:00+08:00",
   "ui": {
     "sortOrder": "desc"
   },
@@ -236,6 +236,165 @@
       ],
       "createdAt": "2023-11-11T09:00:00+08:00",
       "updatedAt": "2023-11-11T09:00:00+08:00"
+    },
+    {
+      "id": "evt_9121631403580_bodiid",
+      "date": "2026-10-13",
+      "title": "Gemini 4 Argon 正式开放（GA）：Google 最强推理模型",
+      "links": [
+        {
+          "name": "Google 官方博客",
+          "url": "https://blog.google/intl/zh-tw/products/explore-get-answers/introducing-gemini-4-argon/"
+        },
+        {
+          "name": "Gemini API 更新日志",
+          "url": "https://aistudio.google.com/docs/changelog"
+        }
+      ],
+      "relatedIds": [],
+      "records": [],
+      "createdAt": "2026-10-13T12:00:00+08:00",
+      "updatedAt": "2026-10-13T12:00:00+08:00"
+    },
+    {
+      "id": "evt_6189881851568_i5ua80",
+      "date": "2026-11-10",
+      "title": "Gemini 4 Carbon 正式推出：死磕长周期编码与科研",
+      "links": [
+        {
+          "name": "Google 黑板报",
+          "url": "https://china.googleblog.com/2026/11/gemini-4-carbon.html"
+        }
+      ],
+      "relatedIds": [
+        "evt_9121631403580_bodiid"
+      ],
+      "records": [],
+      "createdAt": "2026-11-10T12:00:00+08:00",
+      "updatedAt": "2026-11-10T12:00:00+08:00"
+    },
+    {
+      "id": "evt_9203037043684_ztlpdx",
+      "date": "2026-11-12",
+      "title": "Gemini 4 Hydrogen 全球开放：最快一档，所有人可用",
+      "links": [
+        {
+          "name": "Google 官方博客",
+          "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-hydrogen/"
+        },
+        {
+          "name": "Google 黑板报",
+          "url": "https://china.googleblog.com/2026/11/gemini-4-hydrogen.html"
+        }
+      ],
+      "relatedIds": [
+        "evt_9121631403580_bodiid",
+        "evt_6189881851568_i5ua80"
+      ],
+      "records": [],
+      "createdAt": "2026-11-12T12:00:00+08:00",
+      "updatedAt": "2026-11-12T12:00:00+08:00"
+    },
+    {
+      "id": "evt_8569752619812_5c4i0k",
+      "date": "2026-11-17",
+      "title": "OpenAI 发布 GPT-6.2 Astra 与 Sol",
+      "links": [
+        {
+          "name": "OpenAI 模型发布说明",
+          "url": "https://help.openai.com/zh-hans-cn/articles/9624314-model-release-notes"
+        },
+        {
+          "name": "OpenAI 发布页",
+          "url": "https://openai.com/zh-Hans-CN/research/index/release/"
+        }
+      ],
+      "relatedIds": [],
+      "records": [],
+      "createdAt": "2026-11-17T12:00:00+08:00",
+      "updatedAt": "2026-11-17T12:00:00+08:00"
+    },
+    {
+      "id": "evt_5692270627382_xancpl",
+      "date": "2026-11-18",
+      "title": "Gemini 4 Neon 发布：自己当调度，Hydrogen 打并行",
+      "links": [
+        {
+          "name": "Google 官方博客",
+          "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-neon/"
+        },
+        {
+          "name": "Google 黑板报",
+          "url": "https://china.googleblog.com/2026/11/gemini-4-neon.html"
+        }
+      ],
+      "relatedIds": [
+        "evt_9121631403580_bodiid",
+        "evt_6189881851568_i5ua80",
+        "evt_9203037043684_ztlpdx"
+      ],
+      "records": [],
+      "createdAt": "2026-11-18T12:00:00+08:00",
+      "updatedAt": "2026-11-18T12:00:00+08:00"
+    },
+    {
+      "id": "evt_1134474971980_kuebvg",
+      "date": "2026-11-19",
+      "title": "GTA 6 发售：13 年等待结束，Metacritic 99 分",
+      "links": [
+        {
+          "name": "Take-Two 官方公告",
+          "url": "https://www.take2games.com/ir/news/rockstar-games-announces-grand-theft-auto-vi-now-available"
+        },
+        {
+          "name": "PlayStation 商店页",
+          "url": "https://www.playstation.com/zh-hans-cn/games/grand-theft-auto-vi/"
+        }
+      ],
+      "relatedIds": [],
+      "records": [],
+      "createdAt": "2026-11-19T12:00:00+08:00",
+      "updatedAt": "2026-11-19T12:00:00+08:00"
+    },
+    {
+      "id": "evt_2235677662394_g97ju2",
+      "date": "2026-11-19",
+      "title": "Anthropic 纳斯达克上市：募资 813 亿美元创 IPO 纪录",
+      "links": [
+        {
+          "name": "Anthropic 上市公告",
+          "url": "https://www.anthropic.com/news/ipo-close"
+        },
+        {
+          "name": "发行定价公告",
+          "url": "https://www.anthropic.com/news/anthropic-prices-initial-public-offering"
+        }
+      ],
+      "relatedIds": [],
+      "records": [],
+      "createdAt": "2026-11-19T12:00:00+08:00",
+      "updatedAt": "2026-11-19T12:00:00+08:00"
+    },
+    {
+      "id": "evt_5601541876077_vwipfi",
+      "date": "2026-11-20",
+      "title": "GTA 6 首日估收 23.6 亿美元，创娱乐史首发纪录",
+      "links": [
+        {
+          "name": "IT之家报道",
+          "url": "https://www.ithome.com/1/029/866.htm"
+        },
+        {
+          "name": "Deadline 报道",
+          "url": "https://deadline.com/2026/11/gta-6-sales-launch-day-surge-videogame-1237229514/"
+        }
+      ],
+      "relatedIds": [
+        "evt_1134474971980_kuebvg"
+      ],
+      "records": [],
+      "createdAt": "2026-11-20T12:00:00+08:00",
+      "updatedAt": "2026-11-20T12:00:00+08:00"
     }
   ]
 }
