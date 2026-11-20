@@ -19,7 +19,6 @@ export function renderEntry(
   side: 'left' | 'right'
 ): HTMLElement {
   const event = view.event;
-  const rating = view.latestRecord?.rating ?? 0;
   const sideClass = side === 'right' ? 'is-right' : 'is-left';
 
   const dateEl = el('span', { class: 'htl-entry__date' }, [event.date]);
@@ -36,13 +35,8 @@ export function renderEntry(
     [event.title]
   );
 
-  const ratingEl = el(
-    'span',
-    { class: 'htl-entry__rating', title: rating > 0 ? `${rating} 星` : '暂无记录' },
-    [rating > 0 ? '★'.repeat(rating) : '—']
-  );
   const recsEl = el('span', { class: 'htl-entry__recs' }, [`${pad(view.recordCount, 2)} REC`]);
-  const metaEl = el('p', { class: 'htl-entry__meta' }, [ratingEl, recsEl]);
+  const metaEl = el('p', { class: 'htl-entry__meta' }, [recsEl]);
 
   const entryEl = el('div', { class: 'htl-entry' }, [dateEl, titleBtn, metaEl]);
   const entryCell = el('div', { class: 'htl-cell--entry' }, [entryEl]);

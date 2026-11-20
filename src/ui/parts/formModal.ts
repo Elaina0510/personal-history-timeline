@@ -1176,6 +1176,7 @@ export function openRecordForm(
   }
 
   const initialDate = targetRecord ? targetRecord.date : getTodayDateString();
+  // 星级评分已从界面移除：数据层仍带 rating 字段（编辑时保留原值，新建固定 3），只为兼容已有数据与 schema
   const initialRating: Rating = targetRecord ? (targetRecord.rating as Rating) : 3;
   const initialSummary = targetRecord ? targetRecord.summary : '';
   const initialDetail = targetRecord && targetRecord.detail ? targetRecord.detail : '';
@@ -1283,86 +1284,7 @@ export function openRecordForm(
     clearFieldError('date');
   });
 
-  // 3. 字段：星级
-  const ratingFieldBox = el('div', {}, [
-    el(
-      'label',
-      {
-        style:
-          'display: block; font-size: var(--htl-fs-sm, 14px); font-weight: 500; margin-bottom: 6px; color: var(--htl-color-text, #1e293b);',
-      },
-      ['星级评分 *']
-    ),
-    el('div', {
-      class: 'htl-star-rating',
-      role: 'radiogroup',
-      'aria-label': '星级评分',
-      tabindex: '0',
-      'data-focus-key': `form.record.${recordIdPrefix}.rating`,
-      'data-field': 'rating',
-      style: 'display: inline-flex; align-items: center; gap: 4px; outline: none; padding: 4px 0;',
-    }),
-    el('div', {
-      class: 'htl-form__error',
-      'data-error-field': 'rating',
-      style:
-        'display: none; color: var(--htl-color-danger, #e5484d); font-size: var(--htl-fs-xs, 12px); margin-top: 4px;',
-    }),
-  ]);
-
-  const starContainer = ratingFieldBox.querySelector('.htl-star-rating') as HTMLElement;
-
-  function updateStars(): void {
-    starContainer.replaceChildren();
-    for (let i = 1; i <= 5; i++) {
-      const isFilled = i <= currentRating;
-      const starBtn = el(
-        'button',
-        {
-          type: 'button',
-          role: 'radio',
-          'aria-checked': isFilled ? 'true' : 'false',
-          'aria-label': `${i} 星`,
-          style: `background: none; border: none; cursor: pointer; font-size: 26px; line-height: 1; padding: 0 2px; color: ${
-            isFilled ? 'var(--htl-color-star, #f59e0b)' : 'var(--htl-color-border, #cbd5e1)'
-          };`,
-        },
-        [isFilled ? '★' : '☆']
-      );
-
-      starBtn.addEventListener('click', () => {
-        currentRating = i as Rating;
-        isDirty = true;
-        updateStars();
-        clearFieldError('rating');
-      });
-
-      starContainer.appendChild(starBtn);
-    }
-  }
-  updateStars();
-
-  starContainer.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (currentRating > 1) {
-        currentRating = (currentRating - 1) as Rating;
-        isDirty = true;
-        updateStars();
-        clearFieldError('rating');
-      }
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (currentRating < 5) {
-        currentRating = (currentRating + 1) as Rating;
-        isDirty = true;
-        updateStars();
-        clearFieldError('rating');
-      }
-    }
-  });
-
-  // 4. 字段：简评
+  // 3. 字段：简评
   const summaryFieldBox = el('div', {}, [
     el(
       'label',
@@ -1693,7 +1615,6 @@ export function openRecordForm(
 
   // 装配
   formEl.appendChild(dateFieldBox);
-  formEl.appendChild(ratingFieldBox);
   formEl.appendChild(summaryFieldBox);
   formEl.appendChild(detailFieldBox);
   formEl.appendChild(footerActions);

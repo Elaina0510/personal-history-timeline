@@ -74,14 +74,8 @@ function renderPanel(view: CardView): HTMLElement {
     );
   } else {
     for (const rec of records) {
-      const starText = '★'.repeat(rec.rating) + '☆'.repeat(5 - rec.rating);
       const recordHead = el('div', { class: 'htl-detail__record-head' }, [
         el('span', { class: 'htl-detail__record-date' }, [rec.date]),
-        el(
-          'span',
-          { class: 'htl-star', 'aria-label': `${rec.rating} 星` },
-          [starText]
-        ),
         el(
           'button',
           {

@@ -457,7 +457,6 @@ select:focus {
   border-color: var(--htl-color-accent, #f40c3f);
 }
 
-.htl-filter-ratings,
 .htl-filter-actions {
   display: flex;
   flex-wrap: wrap;
@@ -813,12 +812,6 @@ body.is-past-hero .htl-year-nav {
   justify-content: flex-end;
 }
 
-.htl-entry__rating {
-  color: var(--htl-color-accent, #f40c3f);
-  letter-spacing: 0.08em;
-  transition: color var(--htl-transition-fast, 120ms ease);
-}
-
 .htl-entry__title {
   display: block;
   width: 100%;
@@ -856,9 +849,7 @@ body.is-past-hero .htl-year-nav {
 .htl-row:hover .htl-entry__title,
 .htl-row:focus-within .htl-entry__title,
 .htl-row:hover .htl-entry__meta,
-.htl-row:focus-within .htl-entry__meta,
-.htl-row:hover .htl-entry__rating,
-.htl-row:focus-within .htl-entry__rating {
+.htl-row:focus-within .htl-entry__meta {
   color: var(--htl-color-accent-ink, #0b0b0c);
 }
 
@@ -875,17 +866,8 @@ body.is-past-hero .htl-year-nav {
 }
 
 /* --------------------------------------------------------------------------
- * 7. 星级与详情浮层 (.htl-star, .htl-detail*)
+ * 7. 事件详情浮层 (.htl-detail*)
  * -------------------------------------------------------------------------- */
-.htl-star {
-  color: var(--htl-color-accent, #f40c3f);
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--htl-fs-sm, 14px);
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-
 .htl-detail {
   position: fixed;
   inset: 0;
@@ -1220,27 +1202,6 @@ body.is-past-hero .htl-year-nav {
   display: block;
   max-width: 100%;
   border-radius: 0;
-}
-
-.htl-star-rating {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.htl-star-rating button {
-  border: 0;
-  background: none;
-  padding: 2px 4px;
-  font-size: 20px;
-  line-height: 1;
-  color: var(--htl-color-hairline-strong, rgba(242, 239, 230, 0.42));
-}
-
-.htl-star-rating button.is-active,
-.htl-star-rating button:hover {
-  color: var(--htl-color-accent, #f40c3f);
-  border: 0;
-  background: none;
 }
 
 /* Toast：反相红块 */

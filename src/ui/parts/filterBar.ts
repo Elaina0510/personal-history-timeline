@@ -1,6 +1,6 @@
 /**
  * MOD-013: 筛选条 (filterBar.ts)
- * 职责：星级按钮、搜索框（300ms 防抖）、清空筛选、排序切换。
+ * 职责：搜索框（300ms 防抖）、清空筛选、排序切换。星级评分已从界面移除。
  *
  * 禁令：
  * - 不做匹配计算（matchFilters 在 core/select）
@@ -9,7 +9,7 @@
  */
 
 import { el } from '../dom';
-import type { AppState, Rating, SortOrder } from '../../core/types';
+import type { AppState, SortOrder } from '../../core/types';
 import { SEARCH_DEBOUNCE_MS } from '../../core/types';
 import type { Store } from '../../core/store';
 import { registerFilterBarRenderer } from '../render';
@@ -49,34 +49,6 @@ export function onKeywordInput(keyword: string): void {
   }, SEARCH_DEBOUNCE_MS);
 }
 
-export function toggleRating(rating: Rating): void {
-  const current = latestState?.view.filters.ratings ?? [];
-  let next: Rating[];
-  if (current.includes(rating)) {
-    next = current.filter((r) => r !== rating);
-  } else {
-    next = [...current, rating];
-  }
-  const store = getStore();
-  if (store) {
-    // 选中等值星级时关闭「>=4星」快捷项
-    store.setFilters({ ratings: next, minFour: false });
-  }
-}
-
-export function toggleMinFour(): void {
-  const isMinFour = Boolean(latestState?.view.filters.minFour);
-  const store = getStore();
-  if (store) {
-    if (!isMinFour) {
-      // 选中「>=4星」时清空等值选择
-      store.setFilters({ minFour: true, ratings: [] });
-    } else {
-      store.setFilters({ minFour: false });
-    }
-  }
-}
-
 export function clearFilters(): void {
   if (searchDebounceTimer !== null) {
     clearTimeout(searchDebounceTimer);
@@ -106,19 +78,6 @@ export function handleFilterAction(action: string, id?: string, ev?: Event): voi
   }
 
   switch (action) {
-    case 'toggle-filter-rating':
-      if (id === 'min-four' || id === 'minFour' || id === '>=4') {
-        toggleMinFour();
-      } else if (id) {
-        const ratingNum = parseInt(id, 10);
-        if (ratingNum >= 1 && ratingNum <= 5) {
-          toggleRating(ratingNum as Rating);
-        }
-      }
-      break;
-    case 'toggle-filter-min-four':
-      toggleMinFour();
-      break;
     case 'clear-filters':
       clearFilters();
       break;
@@ -187,52 +146,7 @@ export function renderFilterBar(state: AppState): void {
     onKeywordInput(keyword);
   });
 
-  // 2. 星级快捷与等值多选
-  const isMinFour = Boolean(state.view.filters.minFour);
-  const selectedRatings = state.view.filters.ratings ?? [];
-
-  const minFourBtn = el(
-    'button',
-    {
-      type: 'button',
-      class: isMinFour ? 'htl-chip htl-chip--active' : 'htl-chip',
-      'data-action': 'toggle-filter-rating',
-      'data-id': 'min-four',
-      'data-min-four': 'true',
-      'aria-pressed': isMinFour ? 'true' : 'false',
-      title: '4 星及以上（选中时清空等值选择）',
-    },
-    ['≥4 星']
-  );
-
-  const starBtns: HTMLElement[] = [minFourBtn];
-  for (let star = 1; star <= 5; star++) {
-    const isStarActive = !isMinFour && selectedRatings.includes(star as Rating);
-    const starBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: isStarActive ? 'htl-chip htl-chip--active' : 'htl-chip',
-        'data-action': 'toggle-filter-rating',
-        'data-id': String(star),
-        'aria-pressed': isStarActive ? 'true' : 'false',
-        'aria-label': `${star} 星`,
-      },
-      [`${star}★`]
-    );
-    starBtns.push(starBtn);
-  }
-
-  const ratingContainer = el(
-    'div',
-    {
-      class: 'htl-filter-ratings',
-      style: 'display: flex; flex-wrap: wrap; gap: var(--htl-space-1, 4px); align-items: center;',
-    },
-    starBtns
-  );
-
-  // 3. 操作项：排序切换与清空筛选
+  // 2. 操作项：排序切换与清空筛选
   const sortOrder = state.view.sortOrder ?? 'desc';
   const sortLabel = sortOrder === 'desc' ? '降序 (新→旧)' : '正序 (旧→新)';
   const sortBtn = el(
@@ -267,7 +181,7 @@ export function renderFilterBar(state: AppState): void {
     [sortBtn, clearBtn]
   );
 
-  container.replaceChildren(searchInput, ratingContainer, actionsContainer);
+  container.replaceChildren(searchInput, actionsContainer);
 }
 
 // 自动向 UI 渲染主流程注册
