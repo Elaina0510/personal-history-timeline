@@ -1345,11 +1345,11 @@ body.is-locked,
 @media (max-width: 767.98px) {
   :root,
   .htl-timeline {
-    --htl-axis-col: 60px;
-    --htl-axis-wave: 18px;
-    --htl-entry-gap: 12px;
-    --htl-title-fs: 15px;
-    --htl-gutter: 18px;
+    --htl-axis-col: 56px;
+    --htl-axis-wave: 15px;
+    --htl-entry-gap: 10px;
+    --htl-title-fs: 14px;
+    --htl-gutter: 14px;
   }
 
   .htl-masthead__cells .htl-masthead__cell:not(.htl-masthead__top) {
@@ -1394,42 +1394,15 @@ body.is-locked,
     display: none;
   }
 
-  /* 移动端：轴贴左，条目统一靠右，不左右交替 */
-  .htl-row {
-    grid-template-columns: var(--htl-axis-col, 60px) minmax(0, 1fr);
-    column-gap: var(--htl-entry-gap, 12px);
-    padding: 14px 0;
-  }
-
-  .htl-row.is-left .htl-cell--entry,
-  .htl-row.is-right .htl-cell--entry {
-    grid-column: 2;
-  }
-
-  .htl-cell--axis {
-    grid-column: 1;
-  }
-
-  .htl-row.is-left .htl-entry,
-  .htl-row.is-right .htl-entry {
-    text-align: left;
-  }
-
-  .htl-row.is-left .htl-entry__meta,
-  .htl-row.is-right .htl-entry__meta {
-    justify-content: flex-start;
-  }
-
-  .htl-month-heading::after {
-    left: calc(var(--htl-axis-col, 60px) / 2 - 2.5px);
-  }
-
-  .htl-axis-svg {
-    clip-path: inset(0 calc(100% - var(--htl-axis-col, 60px)) 0 0);
-  }
-
+  /* 移动端：保留居中轴 + 左右交错，仅收窄轴列与字号；标题允许断词防溢出 */
   .htl-entry__title {
-    font-size: 15px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .htl-entry__meta {
+    flex-wrap: wrap;
+    gap: 4px 8px;
   }
 
   .htl-year-nav {
