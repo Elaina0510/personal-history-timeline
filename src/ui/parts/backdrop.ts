@@ -20,11 +20,15 @@ const COLUMN_MIN = -170;
 const COLUMN_MAX = 270;
 /** 消失点上下摆幅（百分比）；水平方向始终钉在中轴 x=50，不许横跳 */
 const DRIFT_Y = 5;
+/** 线在离消失点还有多少百分比时就截断 —— 交点本身永远不画出来 */
+const FADE_GAP = 16;
 /** 滚动多少像素走完一个漂移周期 */
 const DRIFT_PERIOD_PX = 2600;
 
 let svgEl: SVGSVGElement | null = null;
 let columnEls: SVGLineElement[] = [];
+/** 每条线底部的 x，沿线回到消失点方向算起点 */
+let bottoms: number[] = [];
 let rafId = 0;
 
 function makeLine(
@@ -46,13 +50,23 @@ function makeLine(
   return line;
 }
 
-/** 只改竖线的起点高度：消失点始终在中轴，只做轻微上下浮动 */
+/** 起点沿「指向消失点」的直线取，但提前 FADE_GAP 截断：线只在远处收拢，交点本身不存在 */
 function paint(): void {
   rafId = 0;
   const angle = ((window.scrollY || 0) / DRIFT_PERIOD_PX) * Math.PI * 2;
-  const y = (HORIZON + DRIFT_Y * Math.cos(angle)).toFixed(2);
-  for (const line of columnEls) {
-    line.setAttribute('y1', y);
+  const vanishY = HORIZON + DRIFT_Y * Math.cos(angle);
+  const startY = vanishY + FADE_GAP;
+  // 起点所在水平线与「消失点→底边」的比值，所有线共用
+  const ratio = FADE_GAP / (100 - vanishY);
+  const yStr = startY.toFixed(2);
+  for (let i = 0; i < columnEls.length; i += 1) {
+    const line = columnEls[i];
+    const bottom = bottoms[i];
+    if (!line || bottom === undefined) {
+      continue;
+    }
+    line.setAttribute('x1', (50 + (bottom - 50) * ratio).toFixed(2));
+    line.setAttribute('y1', yStr);
   }
 }
 
@@ -76,9 +90,9 @@ function build(): void {
   grad.setAttribute('id', 'htl-backdrop-fade');
   grad.setAttribute('gradientUnits', 'userSpaceOnUse');
   grad.setAttribute('x1', '0');
-  grad.setAttribute('y1', String(HORIZON - DRIFT_Y));
+  grad.setAttribute('y1', String(HORIZON - DRIFT_Y + FADE_GAP));
   grad.setAttribute('x2', '0');
-  grad.setAttribute('y2', String(HORIZON + 24));
+  grad.setAttribute('y2', String(HORIZON - DRIFT_Y + FADE_GAP + 14));
   for (const [offset, alpha] of [['0', '0'], ['0.45', '0.45'], ['1', '1']] as const) {
     const stop = document.createElementNS(SVG_NS, 'stop');
     stop.setAttribute('offset', offset);
@@ -108,12 +122,14 @@ function build(): void {
   const group = document.createElementNS(SVG_NS, 'g');
   group.setAttribute('mask', 'url(#htl-backdrop-mask)');
 
-  // 竖线：底部等距、顶部收到同一个消失点，透视感由此产生
+  // 竖线：底部等距、顶部收到同一个消失点方向，但停在消失点之前，不画交点
   columnEls = [];
+  bottoms = [];
   for (let x = COLUMN_MIN; x <= COLUMN_MAX; x += COLUMN_STEP) {
     const dist = Math.abs(x - 50) / 120;
-    const line = makeLine(50, HORIZON, x, 100, Math.max(0.18, 0.72 - dist * 0.42));
+    const line = makeLine(50, HORIZON + FADE_GAP, x, 100, Math.max(0.18, 0.72 - dist * 0.42));
     columnEls.push(line);
+    bottoms.push(x);
     group.appendChild(line);
   }
 
