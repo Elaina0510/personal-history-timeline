@@ -720,7 +720,7 @@ body.is-past-hero .htl-year-nav {
   transition: opacity var(--htl-transition-fast, 120ms ease);
 }
 
-.htl-row:hover::before,
+.htl-row:has(.htl-cell--entry:hover)::before,
 .htl-row:focus-within::before {
   opacity: 1;
 }
@@ -854,25 +854,48 @@ body.is-past-hero .htl-year-nav {
 }
 
 /* 反相状态：行内所有元素改墨色 */
-.htl-row:hover .htl-entry__date,
+.htl-row:has(.htl-cell--entry:hover) .htl-entry__date,
 .htl-row:focus-within .htl-entry__date,
-.htl-row:hover .htl-entry__title,
+.htl-row:has(.htl-cell--entry:hover) .htl-entry__title,
 .htl-row:focus-within .htl-entry__title,
-.htl-row:hover .htl-entry__meta,
+.htl-row:has(.htl-cell--entry:hover) .htl-entry__meta,
 .htl-row:focus-within .htl-entry__meta {
   color: var(--htl-color-accent-ink, #0b0b0c);
 }
 
-.htl-row:hover .htl-node,
+.htl-row:has(.htl-cell--entry:hover) .htl-node,
 .htl-row:focus-within .htl-node {
   background: var(--htl-color-accent-ink, #0b0b0c);
   box-shadow: 0 0 0 3px var(--htl-color-accent, #f40c3f);
 }
 
-.htl-row:hover .htl-entry__title::after,
+.htl-row:has(.htl-cell--entry:hover) .htl-entry__title::after,
 .htl-row:focus-within .htl-entry__title::after {
   opacity: 1;
   transform: translate(0, 0);
+}
+
+/* 老浏览器不支持 :has 时退回整行 hover —— 反馈略宽，但不至于没有 */
+@supports not selector(:has(*)) {
+  .htl-row:hover::before {
+    opacity: 1;
+  }
+
+  .htl-row:hover .htl-entry__date,
+  .htl-row:hover .htl-entry__title,
+  .htl-row:hover .htl-entry__meta {
+    color: var(--htl-color-accent-ink, #0b0b0c);
+  }
+
+  .htl-row:hover .htl-node {
+    background: var(--htl-color-accent-ink, #0b0b0c);
+    box-shadow: 0 0 0 3px var(--htl-color-accent, #f40c3f);
+  }
+
+  .htl-row:hover .htl-entry__title::after {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }
 
 /* --------------------------------------------------------------------------
