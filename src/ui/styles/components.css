@@ -647,7 +647,7 @@ body.is-past-hero .htl-year-nav {
  * 位移只加在条目格上，轴节点必须纹丝不动 —— 折线是拿 .htl-node 的 rect 量的。
  * 隐藏态只挂在 .is-reveal-armed 之下，JS 未执行时内容照常可见。 */
 .htl-timeline.is-reveal-armed .htl-row {
-  transition: opacity 480ms ease-out;
+  transition: opacity 620ms ease-out;
   transition-delay: var(--htl-reveal-delay, 0ms);
 }
 
@@ -656,12 +656,22 @@ body.is-past-hero .htl-year-nav {
 }
 
 .htl-timeline.is-reveal-armed .htl-cell--entry {
-  transition: transform 720ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 800ms cubic-bezier(0.22, 1.6, 0.36, 1);
   transition-delay: var(--htl-reveal-delay, 0ms);
 }
 
+/* 轴点：入场时红圈从外收拢，像节点被点亮（box-shadow 不参与 rect 测量） */
+.htl-timeline.is-reveal-armed .htl-node {
+  transition: box-shadow 820ms ease-out;
+  transition-delay: var(--htl-reveal-delay, 0ms);
+}
+
+.htl-timeline.is-reveal-armed .htl-row:not(.is-revealed) .htl-node {
+  box-shadow: 0 0 0 12px rgba(244, 12, 63, 0.16);
+}
+
 .htl-timeline.is-reveal-armed .htl-row:not(.is-revealed) .htl-cell--entry {
-  transform: translateY(24px);
+  transform: translateY(46px);
   will-change: transform;
 }
 
@@ -891,7 +901,7 @@ body.is-past-hero .htl-year-nav {
   box-shadow: 10px 10px 0 var(--htl-color-accent, #f40c3f);
   padding: 0;
   box-sizing: border-box;
-  animation: htl-panel-rise 380ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation: htl-panel-rise 460ms cubic-bezier(0.22, 1.5, 0.36, 1) both;
 }
 
 /* 浮窗出现：遮罩淡入 + 面板自下浮起，别让点开详情像换了个页面 */
@@ -907,7 +917,7 @@ body.is-past-hero .htl-year-nav {
 @keyframes htl-panel-rise {
   from {
     opacity: 0;
-    transform: translateY(26px) scale(0.985);
+    transform: translateY(44px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -1355,6 +1365,10 @@ body.is-locked,
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+
+  .htl-timeline.is-reveal-armed .htl-row:not(.is-revealed) .htl-node {
+    box-shadow: none !important;
   }
 
   .htl-detail,
