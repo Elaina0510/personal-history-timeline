@@ -70,7 +70,19 @@ async function handler(action: string, id: string | undefined, ev: Event): Promi
       }
       break;
     }
-    case 'open-detail': if (id) openDetail(id, store); break;
+    case 'open-detail': {
+      if (!id) break;
+      // 取被点的那一行作展开起点：先变红的那块长成浮层
+      const node = ev?.target instanceof Element ? ev.target : null;
+      const row = node?.closest<HTMLElement>('.htl-row') ?? null;
+      const rect = row ? row.getBoundingClientRect() : null;
+      openDetail(
+        id,
+        store,
+        rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null
+      );
+      break;
+    }
     case 'close-detail': closeDetail(); break;
     case 'open-lightbox': if (id) openLightbox(id); break;
     case 'jump-relation': {

@@ -27,6 +27,119 @@ let currentRoot: HTMLElement | null = null;
 let currentStore: Store | null = null;
 let lastPanelScrollTop = 0;
 
+/** 展开动画的起点：被点中的那一行（红色高亮块）在视口里的位置 */
+export interface OriginRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+const OPEN_DURATION_MS = 520;
+const CONTENT_FADE_MS = 220;
+const CONTENT_DELAY_MS = 300;
+const OPEN_EASING = 'cubic-bezier(0.45, 0.05, 0.25, 1)';
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/**
+ * 展开动画：浮层从被点的那一行长大。
+ *
+ * - 面板用 transform 从行的矩形拉伸到自身矩形（内容延后淡入，看不见压扁过程）；
+ * - 另加一层红色 ghost，从行的高亮块长到浮层大小再淡出，衔接「变红 → 展开」；
+ * - 无起点 / 偏好减少动效 / WAAPI 不可用时退回 CSS 的 htl-panel-rise。
+ */
+function animateOpen(overlay: HTMLElement, panel: HTMLElement, origin: OriginRect | null): void {
+  if (!origin || prefersReducedMotion()) {
+    return;
+  }
+
+  // 接管后 CSS keyframes 必须让位，否则两套动画叠加
+  panel.style.animation = 'none';
+
+  const target = panel.getBoundingClientRect();
+  if (target.width <= 0 || target.height <= 0) {
+    panel.style.animation = '';
+    return;
+  }
+
+  const dx = origin.left + origin.width / 2 - (target.left + target.width / 2);
+  const dy = origin.top + origin.height / 2 - (target.top + target.height / 2);
+  const sx = Math.max(origin.width / target.width, 0.06);
+  const sy = Math.max(origin.height / target.height, 0.05);
+
+  try {
+    panel.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+        { transform: 'translate(0px, 0px) scale(1, 1)' },
+      ],
+      { duration: OPEN_DURATION_MS, easing: OPEN_EASING, fill: 'both' }
+    );
+
+    // 内容后一步淡入，压扁的过程不被看见
+    for (const child of Array.from(panel.children)) {
+      (child as HTMLElement).animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: CONTENT_FADE_MS,
+        delay: CONTENT_DELAY_MS,
+        easing: 'ease-out',
+        fill: 'both',
+      });
+    }
+
+    // 红色块：从行的高亮块长到浮层大小，途中淡出
+    const ghost = document.createElement('div');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.cssText = [
+      'position:fixed',
+      `left:${origin.left}px`,
+      `top:${origin.top}px`,
+      `width:${origin.width}px`,
+      `height:${origin.height}px`,
+      'background:var(--htl-color-accent, #f40c3f)',
+      'pointer-events:none',
+      'z-index:2',
+    ].join(';');
+    overlay.appendChild(ghost);
+
+    const gsx = target.width / origin.width;
+    const gsy = target.height / origin.height;
+    // ghost 从行出发走向浮层：位移方向与面板相反（面板是从浮层退到行再展开）
+    const gdx = -dx;
+    const gdy = -dy;
+
+    // 位移/缩放与面板用同一组参数，因此红块全程正好盖住面板 —— 看到的是「一块红长大」
+    ghost.animate(
+      [
+        { transform: 'translate(0px, 0px) scale(1, 1)' },
+        { transform: `translate(${gdx}px, ${gdy}px) scale(${gsx}, ${gsy})` },
+      ],
+      { duration: OPEN_DURATION_MS, easing: OPEN_EASING, fill: 'both' }
+    );
+
+    // 透明度单独一条 linear 曲线，先压住红色，后段褪掉露出浮层
+    const ghostFade = ghost.animate(
+      [
+        { opacity: 0.94 },
+        { opacity: 0.92, offset: 0.35 },
+        { opacity: 0.5, offset: 0.72 },
+        { opacity: 0 },
+      ],
+      { duration: OPEN_DURATION_MS, easing: 'linear', fill: 'both' }
+    );
+    ghostFade.onfinish = () => ghost.remove();
+  } catch {
+    // WAAPI 不可用就恢复 CSS 动画
+    panel.style.animation = '';
+  }
+}
+
 const EMPTY_FILTER: FilterState = { ratings: [], minFour: false, keyword: '' };
 
 function getOverlayRoot(): HTMLElement {
@@ -220,7 +333,7 @@ function renderPanel(view: CardView): HTMLElement {
   return panelEl;
 }
 
-export function openDetail(eventId: string, store: Store): void {
+export function openDetail(eventId: string, store: Store, origin?: OriginRect | null): void {
   const state = store.getState();
   const view = getCardView(state, eventId);
 
@@ -237,6 +350,8 @@ export function openDetail(eventId: string, store: Store): void {
   if (currentRoot && currentRoot.isConnected) {
     const oldPanel = currentRoot.querySelector<HTMLElement>('.htl-detail__panel');
     const newPanel = renderPanel(view);
+    // 已打开时切换事件：就地替换内容，不重播展开动画
+    newPanel.style.animation = 'none';
     if (oldPanel) {
       oldPanel.replaceWith(newPanel);
     } else {
@@ -277,6 +392,8 @@ export function openDetail(eventId: string, store: Store): void {
 
   lockScroll();
   overlayRoot.appendChild(modalEl);
+  // 从被点的那一行展开成浮层（无起点时退回 CSS 的 rise 动画）
+  animateOpen(modalEl, panel, origin ?? null);
   // 压一条历史记录：手机上按返回先关浮层，而不是退出整个页面
   pushOverlayEntry();
 }
@@ -317,6 +434,8 @@ export function refreshDetail(state: Readonly<AppState>): void {
   const prevScrollTop = oldPanel ? oldPanel.scrollTop : lastPanelScrollTop;
 
   const newPanel = renderPanel(view);
+  // 数据刷新（增删改记录）时不重播展开动画
+  newPanel.style.animation = 'none';
   if (oldPanel) {
     oldPanel.replaceWith(newPanel);
   } else {

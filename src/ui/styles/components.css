@@ -888,7 +888,7 @@ body.is-past-hero .htl-year-nav {
   align-items: center;
   justify-content: center;
   padding: var(--htl-space-5, 24px);
-  animation: htl-veil-in 220ms ease-out both;
+  animation: htl-veil-in 150ms ease-out both;
 }
 
 .htl-detail__panel {
