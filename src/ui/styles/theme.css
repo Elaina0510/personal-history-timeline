@@ -26,6 +26,8 @@
   --htl-color-ink-hairline: rgba(11, 11, 12, 0.28);
   /* 背景列网格：极淡，只给纸面结构感，不参与分隔 */
   --htl-color-grid: rgba(242, 239, 230, 0.055);
+  /* 3D 背景网格线：同纸白，透明度略高，否则透视之后几乎看不见 */
+  --htl-backdrop-line: rgba(242, 239, 230, 0.2);
 
   /* 遮罩扩展色 */
   --htl-color-overlay: rgba(7, 7, 8, 0.88);

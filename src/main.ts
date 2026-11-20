@@ -14,6 +14,7 @@ import { handleFilterAction, setStore as setFilterStore } from './ui/parts/filte
 import { openImportModal, openExportModal, openRestoreBackupConfirm, setStore as setImportStore } from './ui/parts/importExport';
 import { renderToolbar } from './ui/parts/toolbar';
 import { mountCapacityBar } from './ui/parts/capacityBar';
+import { mountBackdrop } from './ui/parts/backdrop';
 import { initOverlayHistory, pushOverlayEntry } from './ui/parts/overlayHistory';
 import type { AppState } from './core/types';
 
@@ -143,6 +144,7 @@ async function init(): Promise<void> {
   updateHeroStats(store.getState());
   renderToolbar();
   mountCapacityBar(store);
+  mountBackdrop();
   bindActions(handler);
 
   // 浏览器/手机返回键：先关最上层浮层，不要直接退出页面
