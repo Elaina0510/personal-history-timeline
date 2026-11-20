@@ -1,32 +1,32 @@
 /**
- * MOD-022: 透视背景网格 (backdrop.ts)
+ * MOD-022: 透视背景线 (backdrop.ts)
  *
- * 用手算透视画一张「地面网格」：竖线全部汇聚到消失点，横线越靠近观者间距越大，
- * 滚动时横线朝观者方向流动 —— 比 CSS 3D 旋转可预测，也不受 perspective 压缩影响。
+ * 只有竖线：底部等距、顶部全部收到同一个消失点，于是天然向远处汇聚。
+ * 滚动时消失点在视口上部缓慢漂移（左右摆 + 轻微上下），整片线条随之转向，
+ * 形成「镜头在动」的纵深变化 —— 比横线流动安静，也不压文字。
  *
  * 纯装饰层：pointer-events: none、aria-hidden，不参与布局与测量；
- * 滚动只在本层 rAF 里改二十多条 <line> 的 y，不动 DOM 结构。
+ * 滚动只在本层 rAF 里改三十多条 <line> 的起点，不动 DOM 结构。
  * 颜色走 theme.css 的 --htl-backdrop-line（与原来的平面列网格同一纸白色系）。
  */
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** 消失点高度（viewBox 百分比） */
+/** 消失点基准高度（viewBox 百分比） */
 const HORIZON = 20;
-/** 横线条数 */
-const ROW_COUNT = 26;
 /** 底部竖线间距（百分比），画到视口外一点避免两侧留空 */
-const COLUMN_STEP = 13;
+const COLUMN_STEP = 11;
 const COLUMN_MIN = -170;
 const COLUMN_MAX = 270;
-/** 近处间距放大系数：越大越「地平线很近」 */
-const DEPTH_POWER = 2.3;
-/** 滚动多少像素走完一个格距 */
-const SCROLL_PER_CELL = 1100;
+/** 消失点左右摆幅（百分比） */
+const DRIFT_X = 12;
+/** 消失点上下摆幅（百分比） */
+const DRIFT_Y = 5;
+/** 滚动多少像素走完一个漂移周期 */
+const DRIFT_PERIOD_PX = 2600;
 
 let svgEl: SVGSVGElement | null = null;
-let rowEls: SVGLineElement[] = [];
-let phase = 0;
+let columnEls: SVGLineElement[] = [];
 let rafId = 0;
 
 function makeLine(
@@ -48,21 +48,15 @@ function makeLine(
   return line;
 }
 
-/** 横线：远处密、近处疏；相位随滚动推进，像地面在脚下往后跑 */
+/** 只改竖线的起点：消失点随滚动缓慢漂移，底部端点不动 */
 function paint(): void {
   rafId = 0;
-  const count = rowEls.length;
-  for (let i = 0; i < count; i += 1) {
-    const line = rowEls[i];
-    if (!line) {
-      continue;
-    }
-    let t = i / count + phase;
-    t -= Math.floor(t);
-    const y = HORIZON + (100 - HORIZON) * Math.pow(t, DEPTH_POWER);
-    line.setAttribute('y1', y.toFixed(2));
-    line.setAttribute('y2', y.toFixed(2));
-    line.setAttribute('opacity', (0.3 + 0.7 * t).toFixed(2));
+  const angle = ((window.scrollY || 0) / DRIFT_PERIOD_PX) * Math.PI * 2;
+  const x = (50 + DRIFT_X * Math.sin(angle)).toFixed(2);
+  const y = (HORIZON + DRIFT_Y * Math.cos(angle)).toFixed(2);
+  for (const line of columnEls) {
+    line.setAttribute('x1', x);
+    line.setAttribute('y1', y);
   }
 }
 
@@ -86,9 +80,9 @@ function build(): void {
   grad.setAttribute('id', 'htl-backdrop-fade');
   grad.setAttribute('gradientUnits', 'userSpaceOnUse');
   grad.setAttribute('x1', '0');
-  grad.setAttribute('y1', String(HORIZON));
+  grad.setAttribute('y1', String(HORIZON - DRIFT_Y));
   grad.setAttribute('x2', '0');
-  grad.setAttribute('y2', String(HORIZON + 26));
+  grad.setAttribute('y2', String(HORIZON + 24));
   for (const [offset, alpha] of [['0', '0'], ['0.45', '0.45'], ['1', '1']] as const) {
     const stop = document.createElementNS(SVG_NS, 'stop');
     stop.setAttribute('offset', offset);
@@ -102,12 +96,12 @@ function build(): void {
   mask.setAttribute('id', 'htl-backdrop-mask');
   mask.setAttribute('maskUnits', 'userSpaceOnUse');
   mask.setAttribute('x', '-200');
-  mask.setAttribute('y', String(HORIZON));
+  mask.setAttribute('y', String(HORIZON - DRIFT_Y));
   mask.setAttribute('width', '600');
   mask.setAttribute('height', '200');
   const maskRect = document.createElementNS(SVG_NS, 'rect');
   maskRect.setAttribute('x', '-200');
-  maskRect.setAttribute('y', String(HORIZON));
+  maskRect.setAttribute('y', String(HORIZON - DRIFT_Y));
   maskRect.setAttribute('width', '600');
   maskRect.setAttribute('height', '200');
   maskRect.setAttribute('fill', 'url(#htl-backdrop-fade)');
@@ -119,26 +113,16 @@ function build(): void {
   group.setAttribute('mask', 'url(#htl-backdrop-mask)');
 
   // 竖线：底部等距、顶部收到同一个消失点，透视感由此产生
+  columnEls = [];
   for (let x = COLUMN_MIN; x <= COLUMN_MAX; x += COLUMN_STEP) {
     const dist = Math.abs(x - 50) / 120;
-    group.appendChild(makeLine(50, HORIZON, x, 100, Math.max(0.18, 0.72 - dist * 0.42)));
-  }
-
-  // 横线：y 由 paint() 按滚动相位实时算
-  rowEls = [];
-  for (let i = 0; i < ROW_COUNT; i += 1) {
-    const line = makeLine(0, 100, 100, 100, 0.3);
-    rowEls.push(line);
+    const line = makeLine(50, HORIZON, x, 100, Math.max(0.18, 0.72 - dist * 0.42));
+    columnEls.push(line);
     group.appendChild(line);
   }
 
   svg.appendChild(group);
   svgEl = svg;
-}
-
-function syncPhase(): void {
-  phase = (window.scrollY || 0) / SCROLL_PER_CELL;
-  phase -= Math.floor(phase);
 }
 
 export function mountBackdrop(): void {
@@ -165,19 +149,11 @@ export function mountBackdrop(): void {
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  syncPhase();
   paint();
 
   if (reducedMotion) {
     return;
   }
 
-  window.addEventListener(
-    'scroll',
-    () => {
-      syncPhase();
-      schedulePaint();
-    },
-    { passive: true }
-  );
+  window.addEventListener('scroll', schedulePaint, { passive: true });
 }
