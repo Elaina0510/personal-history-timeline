@@ -15,7 +15,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 消失点基准高度（viewBox 百分比） */
 const HORIZON = 20;
 /** 底部竖线间距（百分比），画到视口外一点避免两侧留空 */
-const COLUMN_STEP = 20;
+const COLUMN_STEP = 10;
 const COLUMN_MIN = -170;
 const COLUMN_MAX = 270;
 /** 消失点上下摆幅（百分比）；水平方向始终钉在中轴 x=50，不许横跳 */
@@ -24,6 +24,8 @@ const DRIFT_Y = 5;
 const FADE_GAP = 16;
 /** 滚动多少像素走完一个漂移周期 */
 const DRIFT_PERIOD_PX = 2600;
+/** 底部锚点随滚动横向位移比例：近处动得多、远端纹丝不动，视差由此而来 */
+const DRIFT_SPEED = 0.16;
 
 let svgEl: SVGSVGElement | null = null;
 let columnEls: SVGLineElement[] = [];
@@ -45,28 +47,37 @@ function makeLine(
   line.setAttribute('y2', y2.toFixed(2));
   line.setAttribute('opacity', opacity.toFixed(2));
   line.setAttribute('vector-effect', 'non-scaling-stroke');
-  line.setAttribute('stroke', 'var(--htl-backdrop-line, rgba(242, 239, 230, 0.13))');
+  // 近端亮、远端淡：用纵向渐变当描边，深度差是「立体」的主要来源
+  line.setAttribute('stroke', 'url(#htl-backdrop-stroke)');
   line.setAttribute('stroke-width', '1');
   return line;
 }
 
-/** 起点沿「指向消失点」的直线取，但提前 FADE_GAP 截断：线只在远处收拢，交点本身不存在 */
+/**
+ * 起点沿「指向消失点」的直线取，但提前 FADE_GAP 截断：线只在远处收拢，交点本身不存在。
+ * 底部锚点随滚动横向漂移（取模一个格距，无缝循环），远端固定 —— 近处动、远处静，
+ * 于是整片栅栏在横向巡游，纵深视差就是「动起来」的来源。
+ */
 function paint(): void {
   rafId = 0;
-  const angle = ((window.scrollY || 0) / DRIFT_PERIOD_PX) * Math.PI * 2;
+  const scrollY = window.scrollY || 0;
+  const angle = (scrollY / DRIFT_PERIOD_PX) * Math.PI * 2;
   const vanishY = HORIZON + DRIFT_Y * Math.cos(angle);
   const startY = vanishY + FADE_GAP;
   // 起点所在水平线与「消失点→底边」的比值，所有线共用
   const ratio = FADE_GAP / (100 - vanishY);
+  const drift = ((scrollY * DRIFT_SPEED) % COLUMN_STEP + COLUMN_STEP) % COLUMN_STEP;
   const yStr = startY.toFixed(2);
   for (let i = 0; i < columnEls.length; i += 1) {
     const line = columnEls[i];
-    const bottom = bottoms[i];
-    if (!line || bottom === undefined) {
+    const base = bottoms[i];
+    if (!line || base === undefined) {
       continue;
     }
-    line.setAttribute('x1', (50 + (bottom - 50) * ratio).toFixed(2));
+    const bx = base + drift;
+    line.setAttribute('x1', (50 + (bx - 50) * ratio).toFixed(2));
     line.setAttribute('y1', yStr);
+    line.setAttribute('x2', bx.toFixed(2));
   }
 }
 
@@ -101,6 +112,24 @@ function build(): void {
     grad.appendChild(stop);
   }
   defs.appendChild(grad);
+
+  // 描边渐变：远端极淡、近端偏亮，视线越往下越「结实」
+  const strokeGrad = document.createElementNS(SVG_NS, 'linearGradient');
+  strokeGrad.setAttribute('id', 'htl-backdrop-stroke');
+  strokeGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+  strokeGrad.setAttribute('x1', '0');
+  strokeGrad.setAttribute('y1', String(HORIZON - DRIFT_Y + FADE_GAP));
+  strokeGrad.setAttribute('x2', '0');
+  strokeGrad.setAttribute('y2', '100');
+  for (const [offset, alpha] of [['0', '0.05'], ['0.4', '0.22'], ['1', '0.44']] as const) {
+    const stop = document.createElementNS(SVG_NS, 'stop');
+    stop.setAttribute('offset', offset);
+    // 与 --htl-backdrop-line 同一纸白；这里必须纯色 + stop-opacity 分层，alpha 不能进色值
+    stop.style.stopColor = 'var(--htl-backdrop-ink, #f2efe6)';
+    stop.setAttribute('stop-opacity', alpha);
+    strokeGrad.appendChild(stop);
+  }
+  defs.appendChild(strokeGrad);
 
   const mask = document.createElementNS(SVG_NS, 'mask');
   mask.setAttribute('id', 'htl-backdrop-mask');

@@ -28,6 +28,8 @@
   --htl-color-grid: rgba(242, 239, 230, 0.055);
   /* 3D 背景网格线：同纸白，透明度略高，否则透视之后几乎看不见 */
   --htl-backdrop-line: rgba(242, 239, 230, 0.2);
+  /* 同一纸白的纯色版本：给背景线的描边渐变当 stop-color（alpha 由 stop-opacity 控制） */
+  --htl-backdrop-ink: #f2efe6;
 
   /* 遮罩扩展色 */
   --htl-color-overlay: rgba(7, 7, 8, 0.88);
