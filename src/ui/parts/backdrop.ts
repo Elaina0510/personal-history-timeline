@@ -15,7 +15,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** 消失点基准高度（viewBox 百分比） */
 const HORIZON = 20;
 /** 底部竖线间距（百分比），画到视口外一点避免两侧留空 */
-const COLUMN_STEP = 10;
+const COLUMN_STEP = 20;
 const COLUMN_MIN = -170;
 const COLUMN_MAX = 270;
 /** 消失点上下摆幅（百分比）；水平方向始终钉在中轴 x=50，不许横跳 */
@@ -25,7 +25,7 @@ const FADE_GAP = 16;
 /** 滚动多少像素走完一个漂移周期 */
 const DRIFT_PERIOD_PX = 2600;
 /** 底部锚点随滚动横向位移比例：近处动得多、远端纹丝不动，视差由此而来 */
-const DRIFT_SPEED = 0.16;
+const DRIFT_SPEED = 0.02;
 
 let svgEl: SVGSVGElement | null = null;
 let columnEls: SVGLineElement[] = [];
