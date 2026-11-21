@@ -26,6 +26,12 @@ let currentEventId: string | null = null;
 let currentRoot: HTMLElement | null = null;
 let currentStore: Store | null = null;
 let lastPanelScrollTop = 0;
+/** 打开时记下的起点行矩形，收起时原路缩回去 */
+let currentOrigin: OriginRect | null = null;
+/** 正在播放收起动画，防止重复关闭 */
+let closing = false;
+/** 收起动画结束时要执行的真正清理，重开时可提前触发 */
+let pendingCloseFinish: (() => void) | null = null;
 
 /** 展开动画的起点：被点中的那一行（红色高亮块）在视口里的位置 */
 export interface OriginRect {
@@ -39,6 +45,8 @@ const OPEN_DURATION_MS = 520;
 const CONTENT_FADE_MS = 220;
 const CONTENT_DELAY_MS = 300;
 const OPEN_EASING = 'cubic-bezier(0.45, 0.05, 0.25, 1)';
+/** 收起：展开的逆过程，略快一点，收尾干脆 */
+const CLOSE_DURATION_MS = 420;
 
 function prefersReducedMotion(): boolean {
   return (
@@ -133,10 +141,134 @@ function animateOpen(overlay: HTMLElement, panel: HTMLElement, origin: OriginRec
       ],
       { duration: OPEN_DURATION_MS, easing: 'linear', fill: 'both' }
     );
-    ghostFade.onfinish = () => ghost.remove();
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      ghost.remove();
+    };
+    ghostFade.onfinish = finish;
+    // 后台标签页 rAF 被节流时 onfinish 可能不触发，兜底移除 ghost
+    window.setTimeout(finish, OPEN_DURATION_MS + 120);
   } catch {
     // WAAPI 不可用就恢复 CSS 动画
     panel.style.animation = '';
+  }
+}
+
+/**
+ * 收起动画：展开的逆过程。
+ *
+ * 面板从自身矩形缩回被点的那一行，内容先淡出；红色 ghost 从浮层尺寸缩回行尺寸，
+ * 遮罩整体淡出 —— 观感是「浮层收成红块 → 红块缩回那一行」。
+ * 与展开共用同一组几何参数，所以红块全程正好盖住面板。
+ * 动画结束（或超时兜底）后回调 done 移除节点。不支持 WAAPI / 减少动效时返回 false。
+ */
+function animateClose(
+  overlay: HTMLElement,
+  panel: HTMLElement,
+  origin: OriginRect | null,
+  done: () => void
+): boolean {
+  if (!origin || prefersReducedMotion()) {
+    return false;
+  }
+
+  const target = panel.getBoundingClientRect();
+  if (target.width <= 0 || target.height <= 0) {
+    return false;
+  }
+
+  const dx = origin.left + origin.width / 2 - (target.left + target.width / 2);
+  const dy = origin.top + origin.height / 2 - (target.top + target.height / 2);
+  const sx = Math.max(origin.width / target.width, 0.06);
+  const sy = Math.max(origin.height / target.height, 0.05);
+
+  let ghost: HTMLElement | null = null;
+
+  try {
+    // 清掉展开时残留的 fill 动画，避免两套 transform 叠加
+    panel.getAnimations?.().forEach((a) => a.cancel());
+
+    // 面板：从浮层矩形缩回被点的行（展开的逆过程）
+    panel.animate(
+      [
+        { transform: 'translate(0px, 0px) scale(1, 1)' },
+        { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+      ],
+      { duration: CLOSE_DURATION_MS, easing: OPEN_EASING, fill: 'both' }
+    );
+
+    // 内容先淡出（展开是延迟淡入，收起反过来）
+    for (const child of Array.from(panel.children)) {
+      const c = child as HTMLElement;
+      c.getAnimations?.().forEach((a) => a.cancel());
+      c.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: Math.round(CLOSE_DURATION_MS * 0.65),
+        easing: 'ease-in',
+        fill: 'both',
+      });
+    }
+
+    // 遮罩整体淡出：ease-in 让前段保持、后段快速褪去
+    overlay.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: CLOSE_DURATION_MS,
+      easing: 'ease-in',
+      fill: 'both',
+    });
+
+    // 红 ghost：从浮层尺寸缩回行尺寸，与面板同参，全程盖住面板
+    ghost = document.createElement('div');
+    ghost.setAttribute('aria-hidden', 'true');
+    ghost.style.cssText = [
+      'position:fixed',
+      `left:${origin.left}px`,
+      `top:${origin.top}px`,
+      `width:${origin.width}px`,
+      `height:${origin.height}px`,
+      'background:var(--htl-color-accent, #f40c3f)',
+      'pointer-events:none',
+      'z-index:2',
+    ].join(';');
+    overlay.appendChild(ghost);
+
+    const gsx = target.width / origin.width;
+    const gsy = target.height / origin.height;
+    const gdx = -dx;
+    const gdy = -dy;
+
+    ghost.animate(
+      [
+        { transform: `translate(${gdx}px, ${gdy}px) scale(${gsx}, ${gsy})` },
+        { transform: 'translate(0px, 0px) scale(1, 1)' },
+      ],
+      { duration: CLOSE_DURATION_MS, easing: OPEN_EASING, fill: 'both' }
+    );
+
+    const ghostFade = ghost.animate(
+      [
+        { opacity: 0.94 },
+        { opacity: 0.92, offset: 0.35 },
+        { opacity: 0.5, offset: 0.72 },
+        { opacity: 0 },
+      ],
+      { duration: CLOSE_DURATION_MS, easing: 'linear', fill: 'both' }
+    );
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      ghost?.remove();
+      done();
+    };
+    ghostFade.onfinish = finish;
+    // 标签页切后台时 onfinish 可能不触发，兜底收尾
+    window.setTimeout(finish, CLOSE_DURATION_MS + 120);
+    return true;
+  } catch {
+    ghost?.remove();
+    return false;
   }
 }
 
@@ -334,6 +466,11 @@ function renderPanel(view: CardView): HTMLElement {
 }
 
 export function openDetail(eventId: string, store: Store, origin?: OriginRect | null): void {
+  // 收起动画还没放完就又开了新事件：立即收尾旧的，避免残留节点与滚动锁叠加
+  if (closing && pendingCloseFinish) {
+    pendingCloseFinish();
+  }
+
   const state = store.getState();
   const view = getCardView(state, eventId);
 
@@ -345,6 +482,8 @@ export function openDetail(eventId: string, store: Store, origin?: OriginRect | 
   currentEventId = eventId;
   currentStore = store;
   lastPanelScrollTop = 0;
+  currentOrigin = origin ?? null;
+  closing = false;
 
   // 若已打开浮层，直接复用浮层并就地重建 panel
   if (currentRoot && currentRoot.isConnected) {
@@ -399,23 +538,46 @@ export function openDetail(eventId: string, store: Store, origin?: OriginRect | 
 }
 
 export function closeDetail(): void {
+  if (closing) {
+    return;
+  }
   if (!currentRoot && currentEventId === null) {
     return;
   }
 
-  if (currentRoot) {
-    if (currentRoot.parentNode) {
-      currentRoot.parentNode.removeChild(currentRoot);
-    }
-    currentRoot = null;
-  }
+  const root = currentRoot;
+  const panel = root ? root.querySelector<HTMLElement>('.htl-detail__panel') : null;
 
+  // 逻辑上先关闭：isDetailOpen 立即为 false，避免返回键 / 重复点击二次处理
   currentEventId = null;
   currentStore = null;
   lastPanelScrollTop = 0;
 
+  // 立即解锁滚动并退历史栈：jump-relation 关闭后要马上能 scrollIntoView，
+  // 且不能放进 finish，否则快速重开时提前收尾会重复 unlock / drop
   unlockScroll();
   dropOverlayEntry();
+
+  const finish = () => {
+    if (root && root.parentNode) {
+      root.parentNode.removeChild(root);
+    }
+    if (currentRoot === root) {
+      currentRoot = null;
+    }
+    pendingCloseFinish = null;
+    closing = false;
+  };
+  pendingCloseFinish = finish;
+
+  // 播放收起动画；不支持 / 减少动效时立即清理
+  const animated = root && panel ? animateClose(root, panel, currentOrigin, finish) : false;
+  if (animated) {
+    closing = true;
+  } else {
+    finish();
+  }
+  currentOrigin = null;
 }
 
 export function refreshDetail(state: Readonly<AppState>): void {
